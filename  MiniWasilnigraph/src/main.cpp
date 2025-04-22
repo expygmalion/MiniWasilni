@@ -1,4 +1,4 @@
-#include "../include/Graph.hpp"
+#include "Graph.hpp"
 #include <iostream>
 
 
@@ -19,8 +19,10 @@ void displayMenu() {
     cout << "Select option: ";
 }
 
+
+//hello there
 int main() {
-    Graph g;
+     Graph g;
     int choice;
 
     while (true) {
@@ -68,7 +70,22 @@ int main() {
 //       // Attempt to add an edge with a non-existing city
 //       g.addEdge("Chicago", "Miami", 1300);  // This should display an error
 //
-//      
+//
+    
+    g.addCity("Khartoum");
+    g.addCity("Bahri");
+    g.addEdge("Khartoum", "Bahri", 10);
+    g.addCity("Omdurman");
+    g.addEdge("Khartoum", "Omdurman", 15);
+
+    cout << "Before deleting:\n";
+    g.display();
+
+    g.deleteCity("Khartoum");
+
+    cout << "\nAfter deleting Khartoum:\n";
+    g.display();
+    
     return 0;
 }
 

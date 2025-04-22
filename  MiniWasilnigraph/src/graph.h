@@ -29,6 +29,8 @@ public:
 
 
     void loadGraph(const string& filename);
+    
+    void Graph::deleteCity(string name);
 };
 //  Created by Mishkat Ahmed on 21/04/2025.
 
