@@ -21,3 +21,22 @@ void Graph::display() const {
         cout << "\n";
     }
 }
+void Graph::deleteCity(string name)
+{
+    unordered_map<string, vector<pair<string, int>>>::iterator it;
+
+    for (it = adjList.begin(); it != adjList.end(); ++it) {
+        vector<pair<string, int>> newNeighbors;
+
+        for (const auto& neighbor : it->second) {
+            if (neighbor.first != name) {
+                newNeighbors.push_back(neighbor);
+            }
+        }
+
+        it->second = newNeighbors;
+    }
+
+    adjList.erase(name);
+
+}  

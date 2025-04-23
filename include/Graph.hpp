@@ -12,6 +12,7 @@ public:
     void addCity(const string& city);
     void addEdge(const string& from, const string& to, int distance);
     void display() const;
+    void deleteCity(string name);
 
 private:
     unordered_map<string, vector<pair<string, int>>> adjList;

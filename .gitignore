@@ -63,3 +63,18 @@ Makefile
 
 /.vscode/
 /.vscode/tasks.json
+
+
+# =================== #
+# VISUAL STUDIO FILES #
+
+*.vcxproj
+*.vcxproj.user
+*.vcxproj.filters
+*.sln
+*.json
+*.vs
+/MiniWasilni1/
+/MiniWasilni/
+.vscode/tasks.json
+
