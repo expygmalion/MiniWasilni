@@ -52,3 +52,5 @@ void Graph::display() const {
         cout << "\n";
     }
 }
+
+//  TODO: add deleteCity and deleteEdge  functions : @Olaalx
