@@ -19,6 +19,8 @@ void displayMenu() {
     cout << "Select option: ";
 }
 
+
+//hello there
 int main() {
     Graph g;
     int choice;
@@ -57,7 +59,22 @@ int main() {
             cout << "Feature not implemented yet.\n";
         }
     }
-
+//
+//
+//       g.addCity("New York");
+//       g.addCity("Los Angeles");
+//       g.addCity("Chicago");
+//
+//       g.addEdge("New York", "Los Angeles", 2800);
+//       g.addEdge("New York", "Chicago", 800);
+//       g.addEdge("Los Angeles", "Chicago", 2000);  // This should add the edge successfully
+//
+//       g.display();
+//
+//       // Attempt to add an edge with a non-existing city
+//       g.addEdge("Chicago", "Miami", 1300);  // This should display an error
+//
+//      ma 8adra a3ml runt where is it mayb
     return 0;
 }
 

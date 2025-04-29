@@ -15,6 +15,7 @@ public:
     void deleteCity(string name);
 
 private:
+//    Private to avoid editing by non allowed
     unordered_map<string, vector<pair<string, int>>> adjList;
 };
 
