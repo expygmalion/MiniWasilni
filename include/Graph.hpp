@@ -20,7 +20,8 @@ public:
     void addCity(const string& city);
     void addEdge(const string& from, const string& to, int distance);
     void display() const;
-    void saveGraph(const string& filename);
+    void deleteCity(string name);
+    void saveGraph(const string &filename);
     void loadGraph(const string& filename);
 private:
 //    Private to avoid editing by non allowed

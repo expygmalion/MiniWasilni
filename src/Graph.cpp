@@ -4,6 +4,7 @@
 #include <climits>
 #include <queue>     // For BFS and Dijkstra
 #include <stack>     // For DFS
+#include "Graph.hpp"
 
 using namespace std;
 
