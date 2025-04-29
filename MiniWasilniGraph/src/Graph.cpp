@@ -8,7 +8,7 @@
 #include <stack>     // For DFS
 
 using namespace std;
-//when i cloned it asked me to choose the branch to checkout sh3'al
+
 
 // Add a city (node) to the graph
 void Graph::addCity(const string& city) {
