@@ -5,6 +5,7 @@
 #include <queue>     // For BFS and Dijkstra
 #include <stack>     // For DFS
 #include "Graph.hpp"
+#include <algorithm>
 
 using namespace std;
 
