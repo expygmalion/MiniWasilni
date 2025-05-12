@@ -9,7 +9,7 @@
 #include <stack>
 #include <algorithm>
 
-void BFS::loadFromWeightedGraph(const unordered_map<string, list<pair<string, int>>>& weightedAdj) {
+void BFS::loadFromWeightedGraph(const unordered_map<string, vector<pair<string, int>>>& weightedAdj) {
     adjList.clear();
     for (const auto& [city, neighbors] : weightedAdj) {
         for (const auto& [neighbor, _] : neighbors) {

@@ -79,4 +79,8 @@ void Graph::deleteCity(string name)
 
     adjList.erase(name);
 
-}  
+}
+const unordered_map<string, vector<pair<string, int>>>& Graph::getAdjList() const {
+    return adjList;
+}
+
