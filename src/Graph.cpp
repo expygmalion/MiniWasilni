@@ -4,7 +4,6 @@
 #include <climits>
 #include <queue>     // For BFS and Dijkstra
 #include <stack>     // For DFS
-#include "Graph.hpp"
 #include <algorithm>
 
 using namespace std;
@@ -21,8 +20,7 @@ void Graph::addCity(const string& city) {
 
 // Add an edge (connection) between two cities with a distance
 void Graph::addEdge(const string& from, const string& to, int dist) {
-
-    //handles duplicaiton of an edge
+    //handles duplication of an edge
     for (auto it = adjList[from].begin(); it != adjList[from].end(); ++it) {
         if (it->first == to && it->second == dist) {
             cout << "Edge already exists.\n";
@@ -40,9 +38,8 @@ void Graph::addEdge(const string& from, const string& to, int dist) {
         return;
     }
 
-    adjList[from].emplace_back(to, dist);  // Add edge from 'from' to 'to'
-    adjList[to].emplace_back(from, dist);  // Since it's an undirected graph, add the reverse edge
-    cout << "Edge added between " << from << " and " << to << " with distance " << dist << ".\n";
+    adjList[from].emplace_back(to, dist);  // Add edge only from 'from' to 'to'
+    cout << "Directed edge added from " << from << " to " << to << " with distance " << dist << ".\n";
 }
 
 // Display the graph (cities and their connections)
@@ -133,28 +130,7 @@ void Graph::deleteCity(string name)
 
 }  
 
-//  TODO: add deleteCity and deleteEdge  functions : @Olaalx
-void Graph::deleteCity(string name)
-{
 
-        unordered_map<string, vector<pair<string, int>>>::iterator it;
-
-        for (it = adjList.begin(); it != adjList.end(); ++it) {
-            vector<pair<string, int>> newNeighbors;
-
-            for (const auto& neighbor : it->second) {
-                if (neighbor.first != name) {
-                    newNeighbors.push_back(neighbor);
-                }
-            }
-
-            it->second = newNeighbors;
-        }
-
-        adjList.erase(name);
-
-  
-}
 void Graph::deleteEdge(string from, string  to) {
 
     cout << "Enter the first city: ";

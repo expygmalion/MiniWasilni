@@ -16,6 +16,7 @@
 using namespace std;
 
 class Graph {
+    friend class IOManager;
 public:
     void addCity(const string& city);
     void deleteCity(const string& from, const string& to);

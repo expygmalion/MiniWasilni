@@ -1,8 +1,21 @@
-#include "IOManager.hpp"
+#include "../include/IOManager.hpp"
+#include <filesystem>  // For directory operations
 #include <iostream>
+#include <fstream>
+#include <sstream>
 using namespace std;
 
- 
+
+// constructor
+
+IOManager::IOManager() {
+	// Create data directory if it doesn't exist
+	if (!filesystem::exists("data")) {
+		filesystem::create_directory("data");
+		cout << "Created data directory\n";
+	}
+}
+
 void IOManager::saveGraph(const string& filename, const Graph& graph)
 {
 	ofstream file(filename);

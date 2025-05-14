@@ -11,13 +11,10 @@ using namespace std;
 // File save/load logic here .
 
 class IOManager {
-
-	IOManager();
 public:
-
+	IOManager();  // Constructor declaration
 	void saveGraph(const string& filename, const Graph& graph);
 	void loadGraph(const string& filename, Graph& graph);
-
 };
 
 #endif
