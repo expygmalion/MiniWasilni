@@ -18,9 +18,15 @@ IOManager::IOManager() {
 
 void IOManager::saveGraph(const string& filename, const Graph& graph)
 {
-	ofstream file(filename);
+	// Ensure the path is relative to the project root, not the build directory
+	string filePath = filename;
+	if (filename.find("data/") != 0 && filename.find("/") == string::npos) {
+		filePath = "data/" + filename;
+	}
+
+	ofstream file(filePath);
 	if (!file) {
-		cerr << "Error opening file for writing: " << filename << endl;
+		cerr << "Error opening file for writing: " << filePath << endl;
 		return;
 	}
 	// Save cities
@@ -34,14 +40,20 @@ void IOManager::saveGraph(const string& filename, const Graph& graph)
 		}
 	}
 	file.close();
-	cout << "Graph saved to " << filename << endl;
+	cout << "Graph saved to " << filePath << endl;
 }
 
 void IOManager::loadGraph(const string& filename, Graph& graph)
 {
-	ifstream file(filename);
+	// Ensure the path is relative to the project root, not the build directory
+	string filePath = filename;
+	if (filename.find("data/") != 0 && filename.find("/") == string::npos) {
+		filePath = "data/" + filename;
+	}
+
+	ifstream file(filePath);
 	if (!file) {
-		cerr << "Error opening file for reading: " << filename << endl;
+		cerr << "Error opening file for reading: " << filePath << endl;
 		return;
 	}
 	string line;
@@ -60,7 +72,7 @@ void IOManager::loadGraph(const string& filename, Graph& graph)
 		}
 	}
 	file.close();
-	cout << "Graph loaded from " << filename << endl;
+	cout << "Graph loaded from " << filePath << endl;
 }
 
 

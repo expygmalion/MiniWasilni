@@ -38,7 +38,7 @@ void Graph::addEdge(const string& from, const string& to, int dist) {
         return;
     }
 
-    adjList[from].emplace_back(to, dist);  // Add edge only from 'from' to 'to'
+    adjList[from].emplace_back(to, dist);  // Add edge only from 'from' to 'to' (directed)
     cout << "Directed edge added from " << from << " to " << to << " with distance " << dist << ".\n";
 }
 
@@ -49,60 +49,76 @@ void Graph::display() const {
         return;
     }
 
-    cout << "\n=== Graph ===\n";
+    cout << "\n=== Directed Graph Structure ===\n";
+    cout << "Cities and their outgoing connections:\n";
     for (const auto& [city, neighbors] : adjList) {
-        cout << city << " -> ";
-        for (const auto& [neighbor, dist] : neighbors) {
-            cout << "(" << neighbor << ", " << dist << ") ";
+        cout << "\n" << city << " → ";
+        if (neighbors.empty()) {
+            cout << "No outgoing connections";
+        } else {
+            for (size_t i = 0; i < neighbors.size(); ++i) {
+                const auto& [neighbor, dist] = neighbors[i];
+                cout << neighbor << " (dist: " << dist << ")";
+                if (i < neighbors.size() - 1) {
+                    cout << ", ";
+                }
+            }
         }
         cout << "\n";
     }
+    cout << "\nTotal cities: " << adjList.size() << "\n";
 }
 
-void Graph::deleteCity(string name)
-{
-    unordered_map<string, vector<pair<string, int>>>::iterator it;
-
-    for (it = adjList.begin(); it != adjList.end(); ++it) {
-        vector<pair<string, int>> newNeighbors;
-
-        for (const auto& neighbor : it->second) {
-            if (neighbor.first != name) {
-                newNeighbors.push_back(neighbor);
-            }
-        }
-
-        it->second = newNeighbors;
-    }
-
-    adjList.erase(name);
-
-}  
-
-void Graph::deleteEdge(string from, string  to) {
-
-    cout << "Enter the first city: ";
-    cin >> from;
-    cout << "Enter the second city: ";
-    cin >> to;
-
-    // Check if the edge exists
-    if (adjList.find(from) == adjList.end() || adjList.find(to) == adjList.end()) {
-        cout << "One or both cities not found in the graph.\n";
+void Graph::deleteCity(string name) {
+    if (adjList.find(name) == adjList.end()) {
+        cout << "City " << name << " not found in the graph.\n";
         return;
     }
 
-    // Remove the edge from 'from' to 'to' cities
+    // Remove all edges connected to this city
+    for (auto& [city, neighbors] : adjList) {
+        neighbors.erase(
+            remove_if(neighbors.begin(), neighbors.end(),
+                [&name](const pair<string, int>& neighbor) { 
+                    return neighbor.first == name; 
+                }
+            ),
+            neighbors.end()
+        );
+    }
+
+    // Remove the city
+    adjList.erase(name);
+    cout << "City " << name << " and all its connections have been removed.\n";
+}
+
+void Graph::deleteEdge(string from, string to) {
+    // Check if the cities exist
+    if (adjList.find(from) == adjList.end()) {
+        cout << "City " << from << " not found in the graph.\n";
+        return;
+    }
+    if (adjList.find(to) == adjList.end()) {
+        cout << "City " << to << " not found in the graph.\n";
+        return;
+    }
+
+    // Remove the directed edge from 'from' to 'to'
     auto& neighbors = adjList[from];
-    neighbors.erase(remove_if(neighbors.begin(), neighbors.end(),
-        [&to](const pair<string, int>& neighbor) { return neighbor.first == to; }),
-        neighbors.end());
-
-    // For undirected graph, remove the edge in the opposite direction as well
-    auto& neighborsTo = adjList[to];
-    neighborsTo.erase(remove_if(neighborsTo.begin(), neighborsTo.end(),
-        [&from](const pair<string, int>& neighbor) { return neighbor.first == from; }),
-        neighbors.end());
-
-    cout << "Edge between " << from << " and " << to << " removed successfully.\n";
+    auto sizeBefore = neighbors.size();
+    
+    neighbors.erase(
+        remove_if(neighbors.begin(), neighbors.end(),
+            [&to](const pair<string, int>& neighbor) { 
+                return neighbor.first == to; 
+            }
+        ),
+        neighbors.end()
+    );
+    
+    if (neighbors.size() < sizeBefore) {
+        cout << "Directed edge from " << from << " to " << to << " removed successfully.\n";
+    } else {
+        cout << "No edge found from " << from << " to " << to << ".\n";
+    }
 }
