@@ -59,57 +59,6 @@ void Graph::display() const {
     }
 }
 
-
-/*TODO: add deleteCity and deleteEdge  functions : @Olaalx
-void Graph::deleteCity(string name)
-{
-
-        unordered_map<string, vector<pair<string, int>>>::iterator it;
-
-        for (it = adjList.begin(); it != adjList.end(); ++it) {
-            vector<pair<string, int>> newNeighbors;
-
-            for (const auto& neighbor : it->second) {
-                if (neighbor.first != name) {
-                    newNeighbors.push_back(neighbor);
-                }
-            }
-
-            it->second = newNeighbors;
-        }
-
-        adjList.erase(name);
-
-  
-}
-void Graph::deleteEdge(string from, string  to) {
-
-    cout << "Enter the first city: ";
-    cin >> from;
-    cout << "Enter the second city: ";
-    cin >> to;
-
-    // Check if the edge exists
-    if (adjList.find(from) == adjList.end() || adjList.find(to) == adjList.end()) {
-        cout << "One or both cities not found in the graph.\n";
-        return;
-    }
-
-    // Remove the edge from 'from' to 'to' cities
-    auto& neighbors = adjList[from];
-    neighbors.erase(remove_if(neighbors.begin(), neighbors.end(),
-        [&to](const pair<string, int>& neighbor) { return neighbor.first == to; }),
-        neighbors.end());
-
-    // For undirected graph, remove the edge in the opposite direction as well
-    auto& neighborsTo = adjList[to];
-    neighborsTo.erase(remove_if(neighborsTo.begin(), neighborsTo.end(),
-        [&from](const pair<string, int>& neighbor) { return neighbor.first == from; }),
-        neighbors.end());
-
-    cout << "Edge between " << from << " and " << to << " removed successfully.\n";
-}
-*/ 
 void Graph::deleteCity(string name)
 {
     unordered_map<string, vector<pair<string, int>>>::iterator it;
@@ -129,7 +78,6 @@ void Graph::deleteCity(string name)
     adjList.erase(name);
 
 }  
-
 
 void Graph::deleteEdge(string from, string  to) {
 

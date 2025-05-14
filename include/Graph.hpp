@@ -17,6 +17,7 @@ using namespace std;
 
 class Graph {
     friend class IOManager;
+    friend class Traversal;
 public:
     void addCity(const string& city);
     void deleteCity(const string& from, const string& to);
@@ -26,6 +27,7 @@ public:
     void deleteEdge(string from, string to);
     void saveGraph(const string &filename);
     void loadGraph(const string& filename);
+    const unordered_map<string, vector<pair<string, int>>>& getAdjList() const { return adjList; }
 private:
 //    Private to avoid editing by non allowed
     unordered_map<string, vector<pair<string, int>>> adjList;

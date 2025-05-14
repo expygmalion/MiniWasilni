@@ -1,6 +1,6 @@
-
 #include "../include/Graph.hpp"  
 #include "../include/IOManager.hpp"
+#include "../include/Traversal.hpp"
 #include <iostream>
 #include <string>
 
@@ -13,7 +13,7 @@ void displayMenu() {
     cout << "1. Add City\n";
     cout << "2. Add Edge\n";
     cout << "3. Display Graph\n"; 
-    cout << "4. Traverse (Not implemented)\n"; // work on this    
+    cout << "4. Traverse Graph\n"; 
     cout << "5. Shortest Path (Not implemented)\n"; // work on this
     cout << "6. Delete City\n";
     cout << "7. Delete Edge\n";
@@ -65,7 +65,7 @@ int main() {
             continue;
         }
         else if (choice == 4) {
-            cout << "Traverse feature not implemented yet.\n";
+            Traversal::traverse(g);
             continue;
         }
         else if (choice == 5) {
