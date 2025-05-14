@@ -63,7 +63,7 @@ void Graph::display() const {
 }
 
 
-//  TODO: add deleteCity and deleteEdge  functions : @Olaalx
+/*TODO: add deleteCity and deleteEdge  functions : @Olaalx
 void Graph::deleteCity(string name)
 {
 
@@ -112,7 +112,7 @@ void Graph::deleteEdge(string from, string  to) {
 
     cout << "Edge between " << from << " and " << to << " removed successfully.\n";
 }
-
+*/ 
 void Graph::deleteCity(string name)
 {
     unordered_map<string, vector<pair<string, int>>>::iterator it;
