@@ -40,18 +40,22 @@ int main() {
             cout << "Enter city name: ";
             cin >> city;
             g.addCity(city);
-        } else if (choice == 2) {
+        }
+        else if (choice == 2) {
             string from, to;
             int dist;
             cout << "From: "; cin >> from;
             cout << "To: "; cin >> to;
             cout << "Distance: "; cin >> dist;
             g.addEdge(from, to, dist);
-        } else if (choice == 3) {
+        }
+        else if (choice == 3) {
             g.display();
-        } else if (choice == 8) {
+        }
+        else if (choice == 8) {
             break;
-        } else {
+        }
+        else {
             cout << "Feature not implemented yet.\n";
         }
     }
@@ -74,3 +78,4 @@ int main() {
     return 0;
 }
 
+  
