@@ -56,23 +56,49 @@ void IOManager::loadGraph(const string& filename, Graph& graph)
 		cerr << "Error opening file for reading: " << filePath << endl;
 		return;
 	}
+	
+	// Clear existing graph first
+	// Create a temporary empty graph and swap it with the current one
+	Graph emptyGraph;
+	graph = emptyGraph;
+	
 	string line;
-	// Load cities
-	while (getline(file, line)) {
-		if (line.empty()) break; // Stop if an empty line is encountered
-		graph.addCity(line);
-	}
-	// Load edges
+	vector<string> cities;
+	vector<tuple<string, string, int>> edges;
+	
+	// First pass: read the whole file and separate cities from edges
 	while (getline(file, line)) {
 		istringstream iss(line);
-		string from, to;
+		string first, second;
 		int distance;
-		if (iss >> from >> to >> distance) {
-			graph.addEdge(from, to, distance);
+		
+		if (iss >> first >> second >> distance) {
+			// This is an edge
+			// Standardize city names
+			first = Graph::standardizeCity(first);
+			second = Graph::standardizeCity(second);
+			edges.push_back({first, second, distance});
+		} else if (!line.empty()) {
+			// This is a city
+			// Standardize city name
+			string city = Graph::standardizeCity(line);
+			cities.push_back(city);
 		}
 	}
-	file.close();
+	
+	// Second pass: add all cities first
+	for (const auto& city : cities) {
+		graph.addCity(city);
+	}
+	
+	// Third pass: add all edges
+	for (const auto& [from, to, dist] : edges) {
+		graph.addEdge(from, to, dist);
+	}
+	
 	cout << "Graph loaded from " << filePath << endl;
+	cout << "Loaded " << cities.size() << " cities and " << edges.size() << " edges." << endl;
 }
+
 
 

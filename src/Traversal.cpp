@@ -1,27 +1,66 @@
 #include "../include/Traversal.hpp"
 #include <iostream>
+#include <limits>
 
 using namespace std;
 
 void Traversal::traverse(Graph& graph) {
     int choice;
-    string startCity;
+    string startCity, input;
     
     cout << "\n=== Traversal Options ===\n";
     cout << "1. Depth First Search (DFS)\n";
     cout << "2. Breadth First Search (BFS)\n";
-    cout << "Select traversal type (1-2): ";
-    cin >> choice;
+    cout << "3. Back to Main Menu\n";
+    cout << "Select traversal type (1-3): ";
+    cin >> input;
     
     if (cin.fail()) {
         cin.clear();
-        cin.ignore(1000, '\n');
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
         cout << "Invalid input. Please enter a number.\n";
         return;
     }
     
-    cout << "Enter starting city: ";
-    cin >> startCity;
+    // Check if input is "back"
+    if (input == "back" || input == "BACK" || input == "Back" || input == "3") {
+        return;
+    }
+    
+    // Try to convert to integer
+    try {
+        choice = stoi(input);
+    } catch (...) {
+        cout << "Invalid input. Returning to main menu.\n";
+        return;
+    }
+    
+    if (choice < 1 || choice > 2) {
+        cout << "Invalid choice. Returning to main menu.\n";
+        return;
+    }
+    
+    // Get start city with validation
+    bool validCity = false;
+    while (!validCity) {
+        cout << "Enter starting city (or type 'back' to return to main menu): ";
+        cin >> startCity;
+        
+        // Check if user wants to go back
+        if (startCity == "back" || startCity == "BACK" || startCity == "Back") {
+            return;
+        }
+        
+        // Standardize the city name
+        startCity = Graph::standardizeCity(startCity);
+        
+        if (!graph.cityExists(startCity)) {
+            cout << "City " << startCity << " not found in the graph. Please try again.\n";
+            continue;
+        }
+        
+        validCity = true;
+    }
     
     switch (choice) {
         case 1:
@@ -38,8 +77,9 @@ void Traversal::traverse(Graph& graph) {
 void Traversal::dfs(Graph& graph, const string& startCity) {
     // Get the adjacency list from the graph
     const auto& adjList = graph.getAdjList();
+    string standardCity = Graph::standardizeCity(startCity);
     
-    if (adjList.find(startCity) == adjList.end()) {
+    if (adjList.find(standardCity) == adjList.end()) {
         cout << "Start city not found in the graph.\n";
         return;
     }
@@ -48,7 +88,7 @@ void Traversal::dfs(Graph& graph, const string& startCity) {
     stack<string> s;
     
     // Push the start city onto the stack
-    s.push(startCity);
+    s.push(standardCity);
     
     cout << "DFS Visit Order:\n";
     
@@ -78,8 +118,9 @@ void Traversal::dfs(Graph& graph, const string& startCity) {
 void Traversal::bfs(Graph& graph, const string& startCity) {
     // Get the adjacency list from the graph
     const auto& adjList = graph.getAdjList();
+    string standardCity = Graph::standardizeCity(startCity);
     
-    if (adjList.find(startCity) == adjList.end()) {
+    if (adjList.find(standardCity) == adjList.end()) {
         cout << "Start city not found in the graph.\n";
         return;
     }
@@ -88,11 +129,11 @@ void Traversal::bfs(Graph& graph, const string& startCity) {
     queue<string> q;
     
     // Add the start city to the queue and mark as visited
-    q.push(startCity);
-    visited.insert(startCity);
+    q.push(standardCity);
+    visited.insert(standardCity);
     
     cout << "BFS Visit Order:\n";
-    cout << "Visiting: " << startCity << endl;
+    cout << "Visiting: " << standardCity << endl;
     
     while (!q.empty()) {
         string current = q.front();

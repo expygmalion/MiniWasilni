@@ -5,41 +5,60 @@
 #include <queue>     // For BFS and Dijkstra
 #include <stack>     // For DFS
 #include <algorithm>
+#include <cctype>    // For toupper
 
 using namespace std;
 
+// Helper function to standardize city names (convert to uppercase)
+string Graph::standardizeCity(const string& city) {
+    string result = city;
+    transform(result.begin(), result.end(), result.begin(), ::toupper);
+    return result;
+}
+
+// Check if a city exists in the graph
+bool Graph::cityExists(const string& city) const {
+    string standardizedCity = standardizeCity(city);
+    return adjList.find(standardizedCity) != adjList.end();
+}
+
 // Add a city (node) to the graph
 void Graph::addCity(const string& city) {
-    if (adjList.find(city) == adjList.end()) {
-        adjList[city];  // Ensures the city exists by adding an empty list if not already present
-        cout << "City " << city << " added.\n";
+    string standardizedCity = standardizeCity(city);
+    
+    if (adjList.find(standardizedCity) == adjList.end()) {
+        adjList[standardizedCity];  // Ensures the city exists by adding an empty list if not already present
+        cout << "City " << standardizedCity << " added.\n";
     } else {
-        cout << "City " << city << " already exists.\n";
+        cout << "City " << standardizedCity << " already exists.\n";
     }
 }
 
 // Add an edge (connection) between two cities with a distance
 void Graph::addEdge(const string& from, const string& to, int dist) {
+    string standardizedFrom = standardizeCity(from);
+    string standardizedTo = standardizeCity(to);
+    
+    // Ensure both cities exist in the graph before adding an edge
+    if (!cityExists(standardizedFrom)) {
+        cout << "City " << standardizedFrom << " not found. Please add the city first.\n";
+        return;
+    }
+    if (!cityExists(standardizedTo)) {
+        cout << "City " << standardizedTo << " not found. Please add the city first.\n";
+        return;
+    }
+    
     //handles duplication of an edge
-    for (auto it = adjList[from].begin(); it != adjList[from].end(); ++it) {
-        if (it->first == to && it->second == dist) {
-            cout << "Edge already exists.\n";
+    for (auto it = adjList[standardizedFrom].begin(); it != adjList[standardizedFrom].end(); ++it) {
+        if (it->first == standardizedTo) {
+            cout << "Edge already exists from " << standardizedFrom << " to " << standardizedTo << ".\n";
             return;
         }
     }
 
-    // Ensure both cities exist in the graph before adding an edge
-    if (adjList.find(from) == adjList.end()) {
-        cout << "City " << from << " not found. Please add the city first.\n";
-        return;
-    }
-    if (adjList.find(to) == adjList.end()) {
-        cout << "City " << to << " not found. Please add the city first.\n";
-        return;
-    }
-
-    adjList[from].emplace_back(to, dist);  // Add edge only from 'from' to 'to' (directed)
-    cout << "Directed edge added from " << from << " to " << to << " with distance " << dist << ".\n";
+    adjList[standardizedFrom].emplace_back(standardizedTo, dist);  // Add edge only from 'from' to 'to' (directed)
+    cout << "Directed edge added from " << standardizedFrom << " to " << standardizedTo << " with distance " << dist << ".\n";
 }
 
 // Display the graph (cities and their connections)
@@ -70,8 +89,10 @@ void Graph::display() const {
 }
 
 void Graph::deleteCity(string name) {
-    if (adjList.find(name) == adjList.end()) {
-        cout << "City " << name << " not found in the graph.\n";
+    string standardizedName = standardizeCity(name);
+    
+    if (!cityExists(standardizedName)) {
+        cout << "City " << standardizedName << " not found in the graph.\n";
         return;
     }
 
@@ -79,8 +100,8 @@ void Graph::deleteCity(string name) {
     for (auto& [city, neighbors] : adjList) {
         neighbors.erase(
             remove_if(neighbors.begin(), neighbors.end(),
-                [&name](const pair<string, int>& neighbor) { 
-                    return neighbor.first == name; 
+                [&standardizedName](const pair<string, int>& neighbor) { 
+                    return neighbor.first == standardizedName; 
                 }
             ),
             neighbors.end()
@@ -88,37 +109,40 @@ void Graph::deleteCity(string name) {
     }
 
     // Remove the city
-    adjList.erase(name);
-    cout << "City " << name << " and all its connections have been removed.\n";
+    adjList.erase(standardizedName);
+    cout << "City " << standardizedName << " and all its connections have been removed.\n";
 }
 
 void Graph::deleteEdge(string from, string to) {
+    string standardizedFrom = standardizeCity(from);
+    string standardizedTo = standardizeCity(to);
+    
     // Check if the cities exist
-    if (adjList.find(from) == adjList.end()) {
-        cout << "City " << from << " not found in the graph.\n";
+    if (!cityExists(standardizedFrom)) {
+        cout << "City " << standardizedFrom << " not found in the graph.\n";
         return;
     }
-    if (adjList.find(to) == adjList.end()) {
-        cout << "City " << to << " not found in the graph.\n";
+    if (!cityExists(standardizedTo)) {
+        cout << "City " << standardizedTo << " not found in the graph.\n";
         return;
     }
 
     // Remove the directed edge from 'from' to 'to'
-    auto& neighbors = adjList[from];
+    auto& neighbors = adjList[standardizedFrom];
     auto sizeBefore = neighbors.size();
     
     neighbors.erase(
         remove_if(neighbors.begin(), neighbors.end(),
-            [&to](const pair<string, int>& neighbor) { 
-                return neighbor.first == to; 
+            [&standardizedTo](const pair<string, int>& neighbor) { 
+                return neighbor.first == standardizedTo; 
             }
         ),
         neighbors.end()
     );
     
     if (neighbors.size() < sizeBefore) {
-        cout << "Directed edge from " << from << " to " << to << " removed successfully.\n";
+        cout << "Directed edge from " << standardizedFrom << " to " << standardizedTo << " removed successfully.\n";
     } else {
-        cout << "No edge found from " << from << " to " << to << ".\n";
+        cout << "No edge found from " << standardizedFrom << " to " << standardizedTo << ".\n";
     }
 }

@@ -17,15 +17,52 @@ void Dijkstra::findPath(Graph& graph) {
     
     if (cin.fail()) {
         cin.clear();
-        cin.ignore(1000, '\n');
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
         cout << "Invalid input. Please enter a number.\n";
         return;
     }
     
-    cout << "Enter starting city: ";
-    cin >> startCity;
-    cout << "Enter destination city: ";
-    cin >> endCity;
+    // Get valid start city
+    bool validStart = false;
+    while (!validStart) {
+        cout << "Enter starting city (or type 'back' to return to main menu): ";
+        cin >> startCity;
+        
+        // Check if user wants to go back
+        if (startCity == "back" || startCity == "BACK" || startCity == "Back") {
+            return;
+        }
+        
+        // Standardize the city name
+        startCity = Graph::standardizeCity(startCity);
+        
+        if (!graph.cityExists(startCity)) {
+            cout << "City " << startCity << " not found in the graph. Please try again.\n";
+            continue;
+        }
+        validStart = true;
+    }
+    
+    // Get valid end city
+    bool validEnd = false;
+    while (!validEnd) {
+        cout << "Enter destination city (or type 'back' to return to main menu): ";
+        cin >> endCity;
+        
+        // Check if user wants to go back
+        if (endCity == "back" || endCity == "BACK" || endCity == "Back") {
+            return;
+        }
+        
+        // Standardize the city name
+        endCity = Graph::standardizeCity(endCity);
+        
+        if (!graph.cityExists(endCity)) {
+            cout << "City " << endCity << " not found in the graph. Please try again.\n";
+            continue;
+        }
+        validEnd = true;
+    }
     
     switch (choice) {
         case 1:
@@ -42,8 +79,12 @@ void Dijkstra::findPath(Graph& graph) {
 void Dijkstra::dijkstra(Graph& graph, const string& startCity, const string& endCity) {
     const auto& adjList = graph.getAdjList();
     
+    // Standardize city names
+    string standardStart = Graph::standardizeCity(startCity);
+    string standardEnd = Graph::standardizeCity(endCity);
+    
     // Check if cities exist
-    if (adjList.find(startCity) == adjList.end() || adjList.find(endCity) == adjList.end()) {
+    if (!graph.cityExists(standardStart) || !graph.cityExists(standardEnd)) {
         cout << "One or both cities not found in the graph.\n";
         return;
     }
@@ -59,8 +100,8 @@ void Dijkstra::dijkstra(Graph& graph, const string& startCity, const string& end
     for (const auto& [city, _] : adjList) {
         distances[city] = numeric_limits<int>::max();
     }
-    distances[startCity] = 0;
-    pq.push({0, startCity});
+    distances[standardStart] = 0;
+    pq.push({0, standardStart});
     
     while (!pq.empty()) {
         string current = pq.top().second;
@@ -71,7 +112,7 @@ void Dijkstra::dijkstra(Graph& graph, const string& startCity, const string& end
         if (currentDist > distances[current]) continue;
         
         // If we've reached the end city, we're done
-        if (current == endCity) break;
+        if (current == standardEnd) break;
         
         // Check all neighbors
         for (const auto& [neighbor, dist] : adjList.at(current)) {
@@ -86,14 +127,14 @@ void Dijkstra::dijkstra(Graph& graph, const string& startCity, const string& end
     }
     
     // If we couldn't reach the end city
-    if (distances[endCity] == numeric_limits<int>::max()) {
-        cout << "No path exists between " << startCity << " and " << endCity << ".\n";
+    if (distances[standardEnd] == numeric_limits<int>::max()) {
+        cout << "No path exists between " << standardStart << " and " << standardEnd << ".\n";
         return;
     }
     
     // Reconstruct and display the path
-    vector<string> path = reconstructPath(previous, startCity, endCity);
-    displayPath(path, distances[endCity]);
+    vector<string> path = reconstructPath(previous, standardStart, standardEnd);
+    displayPath(path, distances[standardEnd]);
 }
 
 void Dijkstra::aStar(Graph& graph, const string& startCity, const string& endCity) {

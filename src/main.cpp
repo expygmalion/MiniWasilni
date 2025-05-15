@@ -2,100 +2,78 @@
 #include "../include/IOManager.hpp"
 #include "../include/Traversal.hpp"
 #include "../include/Dijkstra.hpp"
+#include "../include/Utilities.hpp"
 #include <iostream>
 #include <string>
+#include <limits>
 
 using namespace std;
 
-
-
-void displayMenu() {
-    cout << "\n=== MiniWasilni Menu ===\n";
-    cout << "1. Add City\n";
-    cout << "2. Add Edge\n";
-    cout << "3. Display Graph\n"; 
-    cout << "4. Traverse Graph\n"; 
-    cout << "5. Find Shortest Path\n";
-    cout << "6. Delete City\n";
-    cout << "7. Delete Edge\n";
-    cout << "8. Save\n"; 
-    cout << "9. Load\n"; 
-    cout << "10. Exit\n";
-    cout << "Select option: ";
-}
-
-
-//hello there
 int main() {
-
-
     Graph g;
     int choice;
     string filename; 
     IOManager ioManager;
-
+    Utilities utilities;
 
     while (true) {
-        displayMenu();
-        cin >> choice;
-
-        if (cin.fail()) {
-            cin.clear(); cin.ignore(1000, '\n');
-            cout << "Invalid input. Try again.\n";
-            continue;
-        }
+        utilities.displayMenu();
+        
+        choice = utilities.getMenuChoice();
+        
+        if (choice == -1) continue; // Invalid input, try again
 
         if (choice == 1) {
-            string city;
-            cout << "Enter city name: ";
-            cin >> city;
+            string city = utilities.getCityInput("Enter city name: ", g);
+            if (utilities.goBack(city)) continue;
             g.addCity(city);
             continue;
         }
         else if (choice == 2) {
-            string from, to;
-            int dist;
-            cout << "From: "; cin >> from;
-            cout << "To: "; cin >> to;
-            cout << "Distance: "; cin >> dist;
+            string from = utilities.getCityInput("From: ", g, true);
+            if (utilities.goBack(from)) continue;
+            string to = utilities.getCityInput("To: ", g, true);
+            if (utilities.goBack(to)) continue;
+            int dist = utilities.getIntInput("Distance: ");
+            if (dist == -1) continue;
             g.addEdge(from, to, dist);
             continue;
         }
         else if (choice == 3) {
-            g.display();
-            continue;
-        }
-        else if (choice == 4) {
-            Traversal::traverse(g);
-            continue;
-        }
-        else if (choice == 5) {
-            Dijkstra::findPath(g);
-            continue;
-        }
-        else if (choice == 6) {
-            string city;
-            cout << "Enter city name to delete: ";
-            cin >> city;
+            string city = utilities.getCityInput("Enter city name to delete: ", g, true);
+            if (utilities.goBack(city)) continue;
             g.deleteCity(city);
             continue;
         }
-        else if (choice == 7) {
-            string from, to;
-            cout << "From: "; cin >> from;
-            cout << "To: "; cin >> to;
+        else if (choice == 4) {
+            string from = utilities.getCityInput("From: ", g, true);
+            if (utilities.goBack(from)) continue;
+            string to = utilities.getCityInput("To: ", g, true);
+            if (utilities.goBack(to)) continue;
             g.deleteEdge(from, to);
             continue;
         }
+        else if (choice == 5) {
+            g.display();
+            continue;
+        }
+        else if (choice == 6) {
+            Traversal::traverse(g);
+            continue;
+        }
+        else if (choice == 7) {
+            Dijkstra::findPath(g);
+            continue;
+        }
         else if (choice == 8) {
-            cout << "Enter filename to save (e.g., data/graph.txt): ";
-            cin >> filename;
+            filename = utilities.getFileName("Enter filename to save (e.g., data/graph.txt)");
+            if (utilities.goBack(filename)) continue;
             ioManager.saveGraph(filename,g);
             continue;
         }   
         else if (choice == 9) {
-            cout << "Enter filename to load (e.g., data/graph.txt): ";
-            cin >> filename;
+            filename = utilities.getFileName("Enter filename to load (e.g., data/graph.txt)");
+            if (utilities.goBack(filename)) continue;
             ioManager.loadGraph(filename,g);
             continue;
         }
