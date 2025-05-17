@@ -56,7 +56,7 @@ void Dijkstra::findPath(Graph& graph) {
         
         // Standardize the city name
         endCity = Graph::standardizeCity(endCity);
-        
+        // Verify city exists in the graph
         if (!graph.cityExists(endCity)) {
             cout << "City " << endCity << " not found in the graph. Please try again.\n";
             continue;
@@ -91,7 +91,9 @@ void Dijkstra::dijkstra(Graph& graph, const string& startCity, const string& end
     
     // Initialize data structures
     unordered_map<string, int> distances;
+
     unordered_map<string, string> previous;
+
     priority_queue<pair<int, string>, 
                   vector<pair<int, string>>, 
                   greater<pair<int, string>>> pq;
@@ -137,10 +139,7 @@ void Dijkstra::dijkstra(Graph& graph, const string& startCity, const string& end
     displayPath(path, distances[standardEnd]);
 }
 
-void Dijkstra::aStar(Graph& graph, const string& startCity, const string& endCity) {
-    cout << "A* algorithm is not implemented yet.\n";
-}
-
+// @rawanizzeldin write reconstructPath function here
 vector<string> Dijkstra::reconstructPath(const unordered_map<string, string>& previous,
                                        const string& startCity,
                                        const string& endCity) {
@@ -157,6 +156,7 @@ vector<string> Dijkstra::reconstructPath(const unordered_map<string, string>& pr
     return path;
 }
 
+// @expygmalion 
 void Dijkstra::displayPath(const vector<string>& path, int totalDistance) {
     cout << "\nShortest Path Found:\n";
     cout << "Total Distance: " << totalDistance << " units\n";
@@ -170,3 +170,10 @@ void Dijkstra::displayPath(const vector<string>& path, int totalDistance) {
     }
     cout << "\n";
 } 
+
+
+/// @mishkatzaki write aStar function here
+
+void Dijkstra::aStar(Graph& graph, const string& startCity, const string& endCity) {
+    cout << "A* algorithm is not implemented yet.\n";
+}
