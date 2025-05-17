@@ -4,11 +4,30 @@
 #include <limits>
 
 using namespace std;
+#include <cmath> // for sqrt, pow
 
-// Example heuristic (currently zero, meaning A* behaves like Dijkstra)
+unordered_map<string, pair<int, int>> cityCoords = {
+    {"Khartoum", {0, 0}},
+    {"PortSudan", {5, 4}},
+    {"Omdurman", {1, 2}},
+    {"Atbara", {3, 1}},
+    {"WadMadni", {2, -1}},
+    {"Bahri", {1, 1}},
+    // TODO add The cities here
+};
+
 int AStar::heuristic(const string &a, const string &b)
 {
-  return 0; // TODO: improve with domain-specific heuristic if possible
+
+  if (cityCoords.find(a) == cityCoords.end() || cityCoords.find(b) == cityCoords.end())
+  {
+    return 0; // meaning A* behaves like Dijkstra
+  }
+
+  auto [x1, y1] = cityCoords[a];
+  auto [x2, y2] = cityCoords[b];
+
+  return static_cast<int>(sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2))); // Euclidean distance
 }
 
 vector<string> AStar::findPath(Graph &graph, const string &startCity, const string &goalCity)
