@@ -1,87 +1,104 @@
 #include "../include/IOManager.hpp"
-#include <filesystem>
+#include <filesystem>  // For directory operations
+#include <iostream>
 #include <fstream>
 #include <sstream>
-#include <iostream>
-
 using namespace std;
-namespace fs = std::filesystem;
 
-IOManager::IOManager()
-{
-	try
-	{
-		if (!fs::exists("data"))
-		{
-			fs::create_directory("data");
-			cout << "Created 'data' directory.\n";
-		}
-	}
-	catch (const fs::filesystem_error &e)
-	{
-		cerr << "Filesystem error: " << e.what() << endl;
+
+// constructor
+
+IOManager::IOManager() {
+	// Create data directory if it doesn't exist
+	if (!filesystem::exists("data")) {
+		filesystem::create_directory("data");
+		cout << "Created data directory\n";
 	}
 }
-void IOManager::saveGraph(const string &filename, const Graph &graph)
+
+void IOManager::saveGraph(const string& filename, const Graph& graph)
 {
-	ofstream file(filename);
-	if (!file)
-	{
-		cerr << "Error opening file for writing: " << filename << endl;
+	// Ensure the path is relative to the project root, not the build directory
+	string filePath = filename;
+	if (filename.find("data/") != 0 && filename.find("/") == string::npos) {
+		filePath = "data/" + filename;
+	}
+
+	ofstream file(filePath);
+	if (!file) {
+		cerr << "Error opening file for writing: " << filePath << endl;
 		return;
 	}
-
-	// Write cities
-	for (const auto &[city, neighbors] : graph.adjList)
-	{
+	// Save cities
+	for (const auto& [city, neighbors] : graph.adjList) {
 		file << city << endl;
 	}
-	file << "\n"; // Separator between cities and edges
-
-	// Write edges
-	for (const auto &[city, neighbors] : graph.adjList)
-	{
-		for (const auto &[neighbor, dist] : neighbors)
-		{
+	// Save edges
+	for (const auto& [city, neighbors] : graph.adjList) {
+		for (const auto& [neighbor, dist] : neighbors) {
 			file << city << " " << neighbor << " " << dist << endl;
 		}
 	}
-
 	file.close();
-	cout << "Graph saved to " << filename << endl;
+	cout << "Graph saved to " << filePath << endl;
 }
 
-void IOManager::loadGraph(const string &filename, Graph &graph)
+void IOManager::loadGraph(const string& filename, Graph& graph)
 {
-	ifstream file(filename);
-	if (!file)
-	{
-		cerr << "Error opening file for reading: " << filename << endl;
+	// Ensure the path is relative to the project root, not the build directory
+	string filePath = filename;
+	if (filename.find("data/") != 0 && filename.find("/") == string::npos) {
+		filePath = "data/" + filename;
+	}
+
+	ifstream file(filePath);
+	if (!file) {
+		cerr << "Error opening file for reading: " << filePath << endl;
 		return;
 	}
-
+	
+	// Clear existing graph first
+	// Create a temporary empty graph and swap it with the current one
+	Graph emptyGraph;
+	graph = emptyGraph;
+	
 	string line;
-
-	// Load cities
-	while (getline(file, line))
-	{
-		if (line.empty())
-			break; // Stop at separator
-		graph.addCity(line);
-	}
-
-	// Load edges
-	while (getline(file, line))
-	{
+	vector<string> cities;
+	vector<tuple<string, string, int>> edges;
+	
+	// First pass: read the whole file and separate cities from edges
+	while (getline(file, line)) {
 		istringstream iss(line);
-		string from, to;
-		int dist;
-		if (iss >> from >> to >> dist)
-		{
-			graph.addEdge(from, to, dist);
+		string first, second;
+		int distance;
+		
+		if (iss >> first >> second >> distance) {
+			// This is an edge
+			// Standardize city names
+			first = Graph::standardizeCity(first);
+			second = Graph::standardizeCity(second);
+			edges.push_back({first, second, distance});
+		} else if (!line.empty()) {
+			// This is a city
+			// Standardize city name
+			string city = Graph::standardizeCity(line);
+			cities.push_back(city);
 		}
 	}
-
-	file.close();
-	cout << "Graph loaded from " << filename << endl;
+	
+	// Second pass: add all cities first
+	for (const auto& city : cities) {
+		graph.addCity(city);
+	}
+	
+	// Third pass: add all edges
+	for (const auto& [from, to, dist] : edges) {
+		graph.addEdge(from, to, dist);
+	}
+	
+	cout << "Graph loaded from " << filePath << endl;
+	cout << "Loaded " << cities.size() << " cities and " << edges.size() << " edges." << endl;
 }
+
+
+

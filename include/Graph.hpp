@@ -20,7 +20,6 @@ class Graph {
     friend class IOManager;
     friend class Traversal;
     friend class Dijkstra;
-    friend class AStar;
 public:
     void addCity(const string& city);
     void deleteCity(const string& from, const string& to);
@@ -37,6 +36,8 @@ public:
     
     // Convert city name to standard format (uppercase)
     static string standardizeCity(const string& city);
+private:
+//    Private to avoid editing by non allowed
     unordered_map<string, vector<pair<string, int>>> adjList;
 };
 
