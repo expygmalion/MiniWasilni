@@ -13,7 +13,7 @@ class Traversal {
 public:
     static void traverse(Graph& graph);
     static void dfs(Graph& graph, const string& startCity);
-    // static void bfs(Graph& graph, const string& startCity);
+    static void bfs(Graph& graph, const string& startCity);
 };
 
 #endif

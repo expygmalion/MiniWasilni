@@ -67,7 +67,7 @@ void Traversal::traverse(Graph& graph) {
             dfs(graph, startCity);
             break;
         case 2:
-          //  bfs(graph, startCity);
+            bfs(graph, startCity);
             break;
         default:
             cout << "Invalid choice. Please select 1 or 2.\n";
@@ -114,7 +114,7 @@ void Traversal::dfs(Graph& graph, const string& startCity) {
     
     cout << "DFS traversal completed.\n";
 }
-void Traversal :: bfs(Graph& graph, const string& startCity) {
+void Traversal::bfs(Graph& graph, const string& startCity) {
 	// Get the adjacency list from the graph
 	const auto& adjList = graph.getAdjList();
 	string standardCity = Graph::standardizeCity(startCity);
@@ -151,4 +151,4 @@ void Traversal :: bfs(Graph& graph, const string& startCity) {
 	}
 	
 	cout << "BFS traversal completed.\n";
-})
+}

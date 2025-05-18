@@ -21,6 +21,8 @@ void Utilities::displayMenu() {
     cout << "8. Save\n"; 
     cout << "9. Load\n"; 
     cout << "10. Exit\n";
+    cout << "11. Sort all connections by city name\n";
+    cout << "12. Sort all connections by distance\n";
     cout << "Select option: ";
 }
 
