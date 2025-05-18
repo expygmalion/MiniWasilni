@@ -1,0 +1,37 @@
+
+void Traversal::bfs(Graph& graph, const string& startCity) {
+    // Get the adjacency list from the graph
+    const auto& adjList = graph.getAdjList();
+    string standardCity = Graph::standardizeCity(startCity);
+    
+    if (adjList.find(standardCity) == adjList.end()) {
+        cout << "Start city not found in the graph.\n";
+        return;
+    }
+
+    unordered_set<string> visited;
+    queue<string> q;
+    
+    // Add the start city to the queue and mark as visited
+    q.push(standardCity);
+    visited.insert(standardCity);
+    
+    cout << "BFS Visit Order:\n";
+    cout << "Visiting: " << standardCity << endl;
+    
+    while (!q.empty()) {
+        string current = q.front();
+        q.pop();
+        
+        // Visit all unvisited neighbors
+        for (const auto& [neighbor, dist] : adjList.at(current)) {
+            if (visited.find(neighbor) == visited.end()) {
+                visited.insert(neighbor);
+                q.push(neighbor);
+                cout << "Visiting: " << neighbor << endl;
+            }
+        }
+    }
+    
+    cout << "BFS traversal completed.\n";
+} 

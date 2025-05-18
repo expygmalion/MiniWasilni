@@ -64,21 +64,11 @@ Makefile
 
 /.vscode/
 /.vscode/tasks.json
-<<<<<<< HEAD
-
-
-# =================== #
-# VISUAL STUDIO FILES #
-
+.vs/
+MiniWasilni/
+MiniWasilni1/
 *.vcxproj
 *.vcxproj.user
 *.vcxproj.filters
+CppProperties.json
 *.sln
-*.json
-*.vs
-/MiniWasilni1/
-/MiniWasilni/
-.vscode/tasks.json
-
-=======
->>>>>>> b9b829a487cf818d7d1267fc1c5f7a9d85a4b96b
