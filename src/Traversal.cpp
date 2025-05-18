@@ -67,7 +67,7 @@ void Traversal::traverse(Graph& graph) {
             dfs(graph, startCity);
             break;
         case 2:
-          //  bfs(graph, startCity);
+            bfs(graph, startCity);
             break;
         default:
             cout << "Invalid choice. Please select 1 or 2.\n";
@@ -113,4 +113,120 @@ void Traversal::dfs(Graph& graph, const string& startCity) {
     }
     
     cout << "DFS traversal completed.\n";
+}
+
+void Traversal::bfs(Graph& graph, const string& startCity) {
+    // Get the adjacency list from the graph
+    const auto& adjList = graph.getAdjList();
+    string standardCity = Graph::standardizeCity(startCity);
+    
+    if (adjList.find(standardCity) == adjList.end()) {
+        cout << "Start city not found in the graph.\n";
+        return;
+    }
+    
+    unordered_set<string> visited;
+    queue<string> q;
+    
+    // Enqueue the start city
+    q.push(standardCity);
+    visited.insert(standardCity);
+    
+    cout << "BFS Visit Order:\n";
+    
+    while (!q.empty()) {
+        string current = q.front();
+        q.pop();
+        
+        cout << "Visiting: " << current << endl;
+        
+        // Enqueue all unvisited neighbors
+        if (adjList.find(current) != adjList.end()) {
+            for (const auto& [neighbor, _] : adjList.at(current)) {
+                if (visited.find(neighbor) == visited.end()) {
+                    visited.insert(neighbor);
+                    q.push(neighbor);
+                }
+            }
+        }
+    }
+    
+    cout << "BFS traversal completed.\n";
+}
+
+// DFS with path capturing for GUI
+void Traversal::dfsWithPath(const Graph& graph, const string& startCity, vector<string>& path) {
+    path.clear();
+    
+    // Get the adjacency list from the graph
+    const auto& adjList = graph.getAdjList();
+    string standardCity = Graph::standardizeCity(startCity);
+    
+    if (adjList.find(standardCity) == adjList.end()) {
+        return;  // Start city not found
+    }
+    
+    unordered_set<string> visited;
+    stack<string> s;
+    
+    // Push the start city onto the stack
+    s.push(standardCity);
+    
+    while (!s.empty()) {
+        string current = s.top();
+        s.pop();
+        
+        // If the current city hasn't been visited
+        if (visited.find(current) == visited.end()) {
+            visited.insert(current);
+            path.push_back(current);  // Add to path
+            
+            // Push all unvisited neighbors onto the stack (reverse order for correct DFS)
+            if (adjList.find(current) != adjList.end()) {
+                for (auto it = adjList.at(current).rbegin(); it != adjList.at(current).rend(); ++it) {
+                    string neighbor = it->first;
+                    if (visited.find(neighbor) == visited.end()) {
+                        s.push(neighbor);
+                    }
+                }
+            }
+        }
+    }
+}
+
+// BFS with path capturing for GUI
+void Traversal::bfsWithPath(const Graph& graph, const string& startCity, vector<string>& path) {
+    path.clear();
+    
+    // Get the adjacency list from the graph
+    const auto& adjList = graph.getAdjList();
+    string standardCity = Graph::standardizeCity(startCity);
+    
+    if (adjList.find(standardCity) == adjList.end()) {
+        return;  // Start city not found
+    }
+    
+    unordered_set<string> visited;
+    queue<string> q;
+    
+    // Enqueue the start city
+    q.push(standardCity);
+    visited.insert(standardCity);
+    
+    while (!q.empty()) {
+        string current = q.front();
+        q.pop();
+        
+        path.push_back(current);  // Add to path
+        
+        // Enqueue all unvisited neighbors
+        if (adjList.find(current) != adjList.end()) {
+            for (const auto& [neighbor, _] : adjList.at(current)) {
+                if (visited.find(neighbor) == visited.end()) {
+                    visited.insert(neighbor);
+                    q.push(neighbor);
+                }
+            }
+        }
+    }
 }
