@@ -114,3 +114,41 @@ void Traversal::dfs(Graph& graph, const string& startCity) {
     
     cout << "DFS traversal completed.\n";
 }
+void Traversal :: bfs(Graph& graph, const string& startCity) {
+	// Get the adjacency list from the graph
+	const auto& adjList = graph.getAdjList();
+	string standardCity = Graph::standardizeCity(startCity);
+	
+	if (adjList.find(standardCity) == adjList.end()) {
+		cout << "Start city not found in the graph.\n";
+		return;
+	}
+
+	unordered_set<string> visited;
+	queue<string> q;
+	
+	// Push the start city onto the queue
+	q.push(standardCity);
+	
+	cout << "BFS Visit Order:\n";
+	
+	while (!q.empty()) {
+		string current = q.front();
+		q.pop();
+		
+		// If the current city hasn't been visited
+		if (visited.find(current) == visited.end()) {
+			visited.insert(current);
+			cout << "Visiting: " << current << endl;
+			
+			// Push all unvisited neighbors onto the queue
+			for (const auto& neighbor : adjList.at(current)) {
+				if (visited.find(neighbor.first) == visited.end()) {
+					q.push(neighbor.first);
+				}
+			}
+		}
+	}
+	
+	cout << "BFS traversal completed.\n";
+})
