@@ -11,7 +11,7 @@ void Dijkstra::findPath(Graph& graph) {
     
     cout << "\n=== Path Finding Algorithms ===\n";
     cout << "1. Dijkstra's Algorithm\n";
-    cout << "2. A* Algorithm (Not implemented)\n";
+    cout << "2. A* Algorithm \n";
     cout << "Select algorithm (1-2): ";
     cin >> choice;
     
@@ -69,7 +69,7 @@ void Dijkstra::findPath(Graph& graph) {
             dijkstra(graph, startCity, endCity);
             break;
         case 2:
-            aStar(graph, startCity, endCity);
+            AStar::findPath(graph, startCity, endCity);
             break;
         default:
             cout << "Invalid choice. Please select 1 or 2.\n";

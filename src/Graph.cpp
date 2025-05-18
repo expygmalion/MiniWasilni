@@ -1,4 +1,5 @@
 #include "../include/Graph.hpp"
+#include "../include/AStar.hpp"
 #include <iostream>
 #include <algorithm>
 

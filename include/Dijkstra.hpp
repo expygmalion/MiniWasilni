@@ -8,6 +8,8 @@
 #include <unordered_map>
 #include <queue>
 #include <functional>
+#include "../include/AStar.hpp"
+
 
 using namespace std;
 

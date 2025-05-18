@@ -1,8 +1,8 @@
 #include "../include/AStar.hpp"
+#include "../include/Graph.hpp"
 #include <iostream>
 #include <algorithm>
 #include <limits>
-
 using namespace std;
 #include <cmath> // for sqrt, pow
 
@@ -16,16 +16,37 @@ unordered_map<string, pair<int, int>> cityCoords = {
     // TODO add The cities here
 };
 
-int AStar::heuristic(const string &a, const string &b)
-{
+// Factory function to remap adjacency list to city coordinates
+unordered_map<string, pair<int, int>> remapAdjList(const Graph& graph) {
+  unordered_map<string, pair<int, int>> newCoords;
+  const auto& adjList = graph.getAdjList();
+  
+  // Initialize with existing coordinates when available
+  for (const auto& [city, _] : adjList) {
+    if (cityCoords.find(city) != cityCoords.end()) {
+      newCoords[city] = cityCoords[city];
+    } else {
+      // Assign default coordinates for cities not in the original map
+      // This is a simple strategy - in a real implementation, you might
+      // want to use a more sophisticated approach to place cities
+      newCoords[city] = {0, 0};
+    }
+  }
+  
+  return newCoords;
+}
 
-  if (cityCoords.find(a) == cityCoords.end() || cityCoords.find(b) == cityCoords.end())
+int AStar::heuristic(Graph& graph, const string &a, const string &b)
+{
+  auto coords = remapAdjList(graph);
+  
+  if (coords.find(a) == coords.end() || coords.find(b) == coords.end())
   {
     return 0; // meaning A* behaves like Dijkstra
   }
 
-  auto [x1, y1] = cityCoords[a];
-  auto [x2, y2] = cityCoords[b];
+  auto [x1, y1] = coords[a];
+  auto [x2, y2] = coords[b];
 
   return static_cast<int>(sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2))); // Euclidean distance
 }
@@ -51,7 +72,7 @@ vector<string> AStar::findPath(Graph &graph, const string &startCity, const stri
   }
 
   gScore[startCity] = 0;
-  fScore[startCity] = heuristic(startCity, goalCity);
+  fScore[startCity] = heuristic(graph, startCity, goalCity);
 
   using PQElement = pair<int, string>; // (fScore, city)
   priority_queue<PQElement, vector<PQElement>, greater<>> openSet;
@@ -80,7 +101,7 @@ vector<string> AStar::findPath(Graph &graph, const string &startCity, const stri
       {
         cameFrom[neighbor] = current;
         gScore[neighbor] = tentative_gScore;
-        fScore[neighbor] = tentative_gScore + heuristic(neighbor, goalCity);
+        fScore[neighbor] = tentative_gScore + heuristic(graph, neighbor, goalCity);
         openSet.push({fScore[neighbor], neighbor});
       }
     }
