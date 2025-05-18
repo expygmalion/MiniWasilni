@@ -3,6 +3,7 @@
 #include "../include/Traversal.hpp"
 #include "../include/Dijkstra.hpp"
 #include "../include/Utilities.hpp"
+#include "../include/FindPath.hpp"
 #include <iostream>
 #include <string>
 #include <limits>
@@ -62,8 +63,8 @@ int main() {
             continue;
         }
         else if (choice == 7) {
-            Dijkstra::findPath(g);
-            continue;
+            FindPath::UniversalFind(g);
+                        continue;
         }
         else if (choice == 8) {
             filename = utilities.getFileName("Enter filename to save (e.g., data/graph.txt)");

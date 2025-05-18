@@ -67,7 +67,7 @@ void Traversal::traverse(Graph& graph) {
             dfs(graph, startCity);
             break;
         case 2:
-            bfs(graph, startCity);
+          //  bfs(graph, startCity);
             break;
         default:
             cout << "Invalid choice. Please select 1 or 2.\n";
