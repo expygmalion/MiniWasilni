@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <stdexcept>  // For exceptions
 using namespace std;
 
 
@@ -26,21 +27,39 @@ void IOManager::saveGraph(const string& filename, const Graph& graph)
 
 	ofstream file(filePath);
 	if (!file) {
-		cerr << "Error opening file for writing: " << filePath << endl;
-		return;
+		string errorMsg = "Error opening file for writing: " + filePath;
+		cerr << errorMsg << endl;
+		throw runtime_error(errorMsg);
 	}
+	
 	// Save cities
 	for (const auto& [city, neighbors] : graph.adjList) {
 		file << city << endl;
 	}
+	
+	// Check if file is still good
+	if (!file) {
+		string errorMsg = "Error writing cities to file: " + filePath;
+		cerr << errorMsg << endl;
+		throw runtime_error(errorMsg);
+	}
+	
 	// Save edges
 	for (const auto& [city, neighbors] : graph.adjList) {
 		for (const auto& [neighbor, dist] : neighbors) {
 			file << city << " " << neighbor << " " << dist << endl;
+			
+			// Periodically check if file is still good
+			if (!file) {
+				string errorMsg = "Error writing edges to file: " + filePath;
+				cerr << errorMsg << endl;
+				throw runtime_error(errorMsg);
+			}
 		}
 	}
+	
 	file.close();
-	cout << "Graph saved to " << filePath << endl;
+	cout << "Graph saved to " + filePath << endl;
 }
 
 void IOManager::loadGraph(const string& filename, Graph& graph)
@@ -53,8 +72,9 @@ void IOManager::loadGraph(const string& filename, Graph& graph)
 
 	ifstream file(filePath);
 	if (!file) {
-		cerr << "Error opening file for reading: " << filePath << endl;
-		return;
+		string errorMsg = "Error opening file for reading: " + filePath;
+		cerr << errorMsg << endl;
+		throw runtime_error(errorMsg);
 	}
 	
 	// Clear existing graph first
@@ -68,6 +88,11 @@ void IOManager::loadGraph(const string& filename, Graph& graph)
 	
 	// First pass: read the whole file and separate cities from edges
 	while (getline(file, line)) {
+		// Skip empty lines
+		if (line.empty()) {
+			continue;
+		}
+		
 		istringstream iss(line);
 		string first, second;
 		int distance;
@@ -84,6 +109,12 @@ void IOManager::loadGraph(const string& filename, Graph& graph)
 			string city = Graph::standardizeCity(line);
 			cities.push_back(city);
 		}
+	}
+	
+	if (!file.eof() && file.fail()) {
+		string errorMsg = "Error reading file: " + filePath;
+		cerr << errorMsg << endl;
+		throw runtime_error(errorMsg);
 	}
 	
 	// Second pass: add all cities first

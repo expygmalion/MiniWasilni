@@ -20,7 +20,9 @@
 #include <QScrollArea>
 #include <QGraphicsScene>
 #include <QGraphicsView>
+#include <QGraphicsEllipseItem>
 #include <QSlider>
+#include <QGraphicsSceneMouseEvent>
 
 #include "../Graph.hpp"
 #include "../IOManager.hpp"
@@ -30,6 +32,36 @@
 
 class QGraphicsScene;
 class QGraphicsView;
+
+// Custom class for interactive draggable nodes
+class DraggableNode : public QGraphicsEllipseItem {
+public:
+    DraggableNode(qreal x, qreal y, qreal width, qreal height, QGraphicsItem *parent = nullptr);
+    
+    // Get and set node data
+    QString getCityName() const { return cityName; }
+    void setCityName(const QString &name) { cityName = name; }
+    
+    // Enable interactive features
+    void setInteractive(bool interactive) { isInteractive = interactive; }
+    
+protected:
+    // Override mouse event handlers for dragging
+    void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
+    void mouseMoveEvent(QGraphicsSceneMouseEvent *event) override;
+    void mouseReleaseEvent(QGraphicsSceneMouseEvent *event) override;
+    
+    // Hover events for visual feedback
+    void hoverEnterEvent(QGraphicsSceneHoverEvent *event) override;
+    void hoverLeaveEvent(QGraphicsSceneHoverEvent *event) override;
+    
+private:
+    QString cityName;
+    bool isDragging;
+    bool isInteractive;
+    QPointF dragStartPosition;
+    QBrush originalBrush;
+};
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -60,6 +92,9 @@ private slots:
     void findDijkstraPath();
     void findAStarPath();
     
+    // Node interaction handling
+    void handleNodeDragFinished();
+    
 private:
     // Core components
     Graph graph;
@@ -74,6 +109,9 @@ private:
     // Graphics components for graph visualization
     QGraphicsScene *graphScene;
     QGraphicsView *graphView;
+    
+    // Node tracking
+    QMap<QString, DraggableNode*> nodeItems;
     
     // City management group
     QLineEdit *cityNameInput;
@@ -112,6 +150,7 @@ private:
     
     void updateGraphDisplay();
     void updateGraphDisplay(const QString &highlightPath);
+    void updateEdgesForNode(const QString &nodeName);
     
     void logMessage(const QString &message);
     

@@ -295,6 +295,7 @@
   /usr/include/qt/QtCore/qconfig.h \
   /usr/include/qt/QtCore/qcontainerfwd.h \
   /usr/include/qt/QtCore/qcontainertools_impl.h \
+  /usr/include/qt/QtCore/qcoreevent.h \
   /usr/include/qt/QtCore/qdatastream.h \
   /usr/include/qt/QtCore/qdir.h \
   /usr/include/qt/QtCore/qfile.h \
@@ -328,6 +329,7 @@
   /usr/include/qt/QtCore/qrefcount.h \
   /usr/include/qt/QtCore/qregexp.h \
   /usr/include/qt/QtCore/qscopedpointer.h \
+  /usr/include/qt/QtCore/qset.h \
   /usr/include/qt/QtCore/qshareddata.h \
   /usr/include/qt/QtCore/qsharedpointer.h \
   /usr/include/qt/QtCore/qsharedpointer_impl.h \
@@ -361,6 +363,7 @@
   /usr/include/qt/QtGui/qmatrix.h \
   /usr/include/qt/QtGui/qpaintdevice.h \
   /usr/include/qt/QtGui/qpainter.h \
+  /usr/include/qt/QtGui/qpainterpath.h \
   /usr/include/qt/QtGui/qpalette.h \
   /usr/include/qt/QtGui/qpen.h \
   /usr/include/qt/QtGui/qpixelformat.h \
@@ -378,7 +381,9 @@
   /usr/include/qt/QtGui/qtransform.h \
   /usr/include/qt/QtGui/qwindowdefs.h \
   /usr/include/qt/QtWidgets/QFileDialog \
+  /usr/include/qt/QtWidgets/QGraphicsEllipseItem \
   /usr/include/qt/QtWidgets/QGraphicsScene \
+  /usr/include/qt/QtWidgets/QGraphicsSceneMouseEvent \
   /usr/include/qt/QtWidgets/QGraphicsView \
   /usr/include/qt/QtWidgets/QGroupBox \
   /usr/include/qt/QtWidgets/QHBoxLayout \
@@ -400,7 +405,9 @@
   /usr/include/qt/QtWidgets/qdialog.h \
   /usr/include/qt/QtWidgets/qfiledialog.h \
   /usr/include/qt/QtWidgets/qframe.h \
+  /usr/include/qt/QtWidgets/qgraphicsitem.h \
   /usr/include/qt/QtWidgets/qgraphicsscene.h \
+  /usr/include/qt/QtWidgets/qgraphicssceneevent.h \
   /usr/include/qt/QtWidgets/qgraphicsview.h \
   /usr/include/qt/QtWidgets/qgridlayout.h \
   /usr/include/qt/QtWidgets/qgroupbox.h \

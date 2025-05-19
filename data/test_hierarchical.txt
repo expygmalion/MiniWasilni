@@ -1,0 +1,34 @@
+# Test graph for hierarchical layout
+# Format: City1,City2,Distance
+
+# Level 0 (Root)
+StartNode,A,5
+StartNode,B,8
+StartNode,C,3
+
+# Level 1
+A,D,4
+A,E,6
+B,F,2
+B,G,7
+C,H,9
+
+# Level 2
+D,I,3
+E,J,5
+F,K,8
+G,L,2
+H,M,4
+
+# Level 3
+I,End1,7
+J,End2,3
+K,End3,5
+L,End2,4
+M,End1,6
+
+# Some cross-connections
+A,F,12
+C,E,10
+G,M,8
+D,L,15 

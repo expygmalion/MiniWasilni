@@ -27,7 +27,116 @@
 #include <QGraphicsPathItem>
 #include <QPainterPath>
 #include <QMap>
+#include <QDir>
+#include <QGraphicsDropShadowEffect>
+#include <QGraphicsSceneHoverEvent>
 #include <cmath>
+
+// DraggableNode implementation
+DraggableNode::DraggableNode(qreal x, qreal y, qreal width, qreal height, QGraphicsItem *parent)
+    : QGraphicsEllipseItem(x, y, width, height, parent),
+      isDragging(false),
+      isInteractive(true)
+{
+    // Enable mouse tracking and hover events
+    setAcceptHoverEvents(true);
+    setFlag(QGraphicsItem::ItemIsMovable);
+    setFlag(QGraphicsItem::ItemIsSelectable);
+    setFlag(QGraphicsItem::ItemSendsGeometryChanges);
+    
+    // Store original brush for hover effects
+    originalBrush = brush();
+    
+    // Default cursor to indicate draggable
+    setCursor(Qt::OpenHandCursor);
+}
+
+void DraggableNode::mousePressEvent(QGraphicsSceneMouseEvent *event)
+{
+    if (event->button() == Qt::LeftButton && isInteractive) {
+        // Start dragging
+        isDragging = true;
+        dragStartPosition = event->pos();
+        setCursor(Qt::ClosedHandCursor);
+        
+        // Add a temporary highlight effect
+        setBrush(QBrush(QColor(255, 165, 0))); // Orange highlight
+        
+        // Call base implementation for selection behavior
+        QGraphicsEllipseItem::mousePressEvent(event);
+        
+        // Bring to front while dragging
+        setZValue(20);
+    }
+}
+
+void DraggableNode::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
+{
+    if (isDragging && isInteractive) {
+        // Inform QGraphicsItem of the move for standard dragging
+        QGraphicsEllipseItem::mouseMoveEvent(event);
+        
+        // Signal that the node has moved to update connected edges
+        emit dynamic_cast<QObject*>(scene())->property("nodeMoving").toBool();
+    }
+}
+
+void DraggableNode::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
+{
+    if (event->button() == Qt::LeftButton && isDragging) {
+        // Stop dragging
+        isDragging = false;
+        setCursor(Qt::OpenHandCursor);
+        
+        // Restore standard appearance but keep selected state
+        if (isSelected()) {
+            setBrush(QBrush(QColor(100, 200, 255))); // Light blue for selected
+        } else {
+            setBrush(originalBrush);
+        }
+        
+        // Reset the Z value
+        setZValue(10);
+        
+        // Call base implementation
+        QGraphicsEllipseItem::mouseReleaseEvent(event);
+        
+        // Notify the scene that dragging has finished
+        QGraphicsScene *graphScene = scene();
+        if (graphScene) {
+            // This will be caught by MainWindow
+            QMetaObject::invokeMethod(graphScene->parent(), "handleNodeDragFinished");
+        }
+    }
+}
+
+void DraggableNode::hoverEnterEvent(QGraphicsSceneHoverEvent *event)
+{
+    if (isInteractive) {
+        // Store the original brush if not already stored
+        if (brush() != QBrush(QColor(255, 165, 0)) && brush() != QBrush(QColor(100, 200, 255))) {
+            originalBrush = brush();
+        }
+        
+        // Apply subtle hover effect if not selected or dragging
+        if (!isSelected() && !isDragging) {
+            QColor hoverColor = originalBrush.color().lighter(115);
+            setBrush(QBrush(hoverColor));
+        }
+    }
+    QGraphicsEllipseItem::hoverEnterEvent(event);
+}
+
+void DraggableNode::hoverLeaveEvent(QGraphicsSceneHoverEvent *event)
+{
+    if (isInteractive) {
+        // Restore original appearance if not selected or dragging
+        if (!isSelected() && !isDragging) {
+            setBrush(originalBrush);
+        }
+    }
+    QGraphicsEllipseItem::hoverLeaveEvent(event);
+}
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -275,17 +384,40 @@ void MainWindow::logMessage(const QString &message) {
 void MainWindow::saveGraph() {
     QString fileName = QFileDialog::getSaveFileName(this, "Save Graph", "data/", "Text Files (*.txt)");
     if (!fileName.isEmpty()) {
-        ioManager.saveGraph(fileName.toStdString(), graph);
-        logMessage("Graph saved to " + fileName);
+        // Check if the file has a .txt extension, if not, add it
+        if (!fileName.endsWith(".txt", Qt::CaseInsensitive)) {
+            fileName += ".txt";
+        }
+        
+        // Ensure the data directory exists
+        QDir dataDir("data");
+        if (!dataDir.exists()) {
+            QDir().mkdir("data");
+            logMessage("Created data directory");
+        }
+        
+        // Try to save the graph
+        try {
+            ioManager.saveGraph(fileName.toStdString(), graph);
+            logMessage("Graph saved to " + fileName);
+        } catch (const std::exception& e) {
+            logMessage("Error saving graph: " + QString(e.what()));
+            QMessageBox::critical(this, "Save Error", "Failed to save graph: " + QString(e.what()));
+        }
     }
 }
 
 void MainWindow::loadGraph() {
     QString fileName = QFileDialog::getOpenFileName(this, "Load Graph", "data/", "Text Files (*.txt)");
     if (!fileName.isEmpty()) {
-        ioManager.loadGraph(fileName.toStdString(), graph);
-        updateGraphDisplay();
-        logMessage("Graph loaded from " + fileName);
+        try {
+            ioManager.loadGraph(fileName.toStdString(), graph);
+            updateGraphDisplay();
+            logMessage("Graph loaded from " + fileName);
+        } catch (const std::exception& e) {
+            logMessage("Error loading graph: " + QString(e.what()));
+            QMessageBox::critical(this, "Load Error", "Failed to load graph: " + QString(e.what()));
+        }
     }
 }
 
@@ -762,8 +894,18 @@ bool MainWindow::renderDotToSvg(const QString &dotFilePath, const QString &svgFi
 void MainWindow::updateGraphDisplay() {
     logMessage("DEBUG: Updating graph display...");
     
-    // Clear the scene
+    // Clear the scene, but keep track of node positions
+    QMap<QString, QPointF> nodePositions;
+    
+    // First, collect node positions before clearing
+    for (auto it = nodeItems.begin(); it != nodeItems.end(); ++it) {
+        DraggableNode* node = it.value();
+        nodePositions[it.key()] = node->pos();
+    }
+    
+    // Now clear the scene
     graphScene->clear();
+    nodeItems.clear();
     
     // Get graph data
     const auto& adjList = graph.getAdjList();
@@ -776,9 +918,10 @@ void MainWindow::updateGraphDisplay() {
         return;
     }
     
-    // Calculate node positions using force-directed layout for better visualization
-    QMap<QString, QPointF> nodePositions;
-    calculateForceDirectedLayout(adjList, nodePositions);
+    // For first-time display, calculate initial positions using force-directed layout
+    if (nodePositions.isEmpty()) {
+        calculateForceDirectedLayout(adjList, nodePositions);
+    }
     
     // First draw edges
     drawGraphEdges(adjList, nodePositions);
@@ -812,17 +955,11 @@ void MainWindow::updateGraphDisplay(const QString &highlightPath) {
         return;  // Need at least two cities for a path
     }
     
-    // Find all node items
-    QMap<QString, QGraphicsEllipseItem*> nodeItems;
+    // Find all node items - we now use our nodeItems map
     QMap<QString, QPointF> nodePositions;
     
-    for (QGraphicsItem *item : graphScene->items()) {
-        QGraphicsEllipseItem *ellipse = dynamic_cast<QGraphicsEllipseItem*>(item);
-        if (ellipse && ellipse->data(0).toString() == "node") {
-            QString city = ellipse->data(1).toString();
-            nodeItems[city] = ellipse;
-            nodePositions[city] = ellipse->pos();
-        }
+    for (auto it = nodeItems.begin(); it != nodeItems.end(); ++it) {
+        nodePositions[it.key()] = it.value()->pos();
     }
     
     // Highlight the path edges
@@ -835,7 +972,7 @@ void MainWindow::updateGraphDisplay(const QString &highlightPath) {
             QPointF toPos = nodePositions[toCity];
             
             // Draw highlighted arrow
-            drawCurvedArrow(graphScene, fromPos, toPos, "", QColor(255, 102, 0), 3.0, true);
+            drawCurvedArrow(graphScene, fromPos, toPos, "", QColor(255, 102, 0), 3.0, true, false);
             
             // Highlight the nodes
             if (nodeItems.contains(fromCity)) {
@@ -855,30 +992,70 @@ void MainWindow::calculateForceDirectedLayout(const unordered_map<string, vector
                                            QMap<QString, QPointF>& nodePositions) {
     // Initialize node positions in a circle
     int numNodes = adjList.size();
-    qreal radius = 200;
+    qreal radius = qMin(300.0, 50.0 + numNodes * 15.0); // Dynamic radius based on node count
     int i = 0;
     
     // Map to store nodes for quick lookup
     QMap<QString, bool> nodeMap;
     
-    // First position nodes in a circle
-    for (const auto& [city, _] : adjList) {
+    // Map to count connection degree of nodes and store max weight
+    QMap<QString, int> nodeDegrees;
+    QMap<QString, int> nodeMaxWeight;
+    int maxDegree = 0;
+    int maxWeight = 1;
+    int minWeight = INT_MAX;
+    
+    // First position nodes in a circle and compute node degrees
+    for (const auto& [city, neighbors] : adjList) {
+        QString cityStr = QString::fromStdString(city);
+        
+        // Count degree and find maximum edge weight for this node
+        int degree = neighbors.size();
+        int maxNodeWeight = 0;
+        
+        for (const auto& [_, weight] : neighbors) {
+            maxNodeWeight = qMax(maxNodeWeight, weight);
+            minWeight = qMin(minWeight, weight);
+            maxWeight = qMax(maxWeight, weight);
+        }
+        
+        nodeDegrees[cityStr] = degree;
+        nodeMaxWeight[cityStr] = maxNodeWeight;
+        maxDegree = qMax(maxDegree, degree);
+        
+        // Place node on the circle
         qreal angle = 2 * M_PI * i / numNodes;
         qreal x = radius * cos(angle);
         qreal y = radius * sin(angle);
         
-        QString cityStr = QString::fromStdString(city);
         nodePositions[cityStr] = QPointF(x, y);
         nodeMap[cityStr] = true;
         i++;
     }
     
+    // If there's only one weight value, avoid division by zero
+    if (minWeight == maxWeight) {
+        minWeight = maxWeight - 1;
+    }
+    
     // Force-directed layout iterations
-    const int ITERATIONS = 50;
-    const qreal k = 50.0;  // Optimal distance
-    const qreal REPULSION = 9000.0;
-    const qreal ATTRACTION = 0.06;
-    const qreal MAX_DELTA = 10.0;
+    const int ITERATIONS = 70; // Increased iterations for better convergence
+    // Optimal distance - dynamic based on node count
+    const qreal k = qMin(150.0, 30.0 + numNodes * 3.0);
+    const qreal REPULSION_BASE = 10000.0;
+    const qreal ATTRACTION_BASE = 0.05;
+    const qreal MAX_DELTA = 15.0; // Increased maximum delta for faster convergence
+    
+    // Weight scaling function: Map weights from [minWeight, maxWeight] to [0.5, 2.0]
+    auto scaleWeight = [minWeight, maxWeight](int weight) -> qreal {
+        // Invert the weight - smaller weights mean stronger attraction (shorter distance)
+        // For very large weights, use a logarithmic scale
+        if (maxWeight > 100) {
+            return 0.5 + 1.5 * (1.0 - log(weight) / log(maxWeight));
+        } else {
+            return 0.5 + 1.5 * (1.0 - (weight - minWeight) / static_cast<qreal>(maxWeight - minWeight));
+        }
+    };
     
     for (int iter = 0; iter < ITERATIONS; iter++) {
         // Calculate repulsive forces between all pairs of nodes
@@ -894,6 +1071,10 @@ void MainWindow::calculateForceDirectedLayout(const unordered_map<string, vector
             QString c1 = QString::fromStdString(city1);
             QPointF pos1 = nodePositions[c1];
             
+            // Repulsion factor scales with node degree
+            qreal degreeFactor = 0.5 + 0.5 * (nodeDegrees[c1] / static_cast<qreal>(qMax(1, maxDegree)));
+            qreal nodeRepulsion = REPULSION_BASE * degreeFactor;
+            
             for (const auto& [city2, _] : adjList) {
                 if (city1 == city2) continue;
                 
@@ -904,7 +1085,7 @@ void MainWindow::calculateForceDirectedLayout(const unordered_map<string, vector
                 qreal distance = qMax(0.1, QLineF(pos1, pos2).length());
                 
                 // Repulsive force is inversely proportional to distance
-                qreal repulsiveForce = REPULSION / (distance * distance);
+                qreal repulsiveForce = nodeRepulsion / (distance * distance);
                 
                 // Normalize the delta
                 if (distance > 0) {
@@ -920,15 +1101,17 @@ void MainWindow::calculateForceDirectedLayout(const unordered_map<string, vector
             QString c1 = QString::fromStdString(city);
             QPointF pos1 = nodePositions[c1];
             
-            for (const auto& [neighbor, _] : neighbors) {
+            for (const auto& [neighbor, weight] : neighbors) {
                 QString c2 = QString::fromStdString(neighbor);
                 QPointF pos2 = nodePositions[c2];
                 
                 QPointF delta = pos1 - pos2;
                 qreal distance = QLineF(pos1, pos2).length();
                 
-                // Attractive force is proportional to distance
-                qreal attractiveForce = ATTRACTION * distance;
+                // Attractive force is proportional to distance and inversely proportional to weight
+                // Higher weights = longer distances = weaker attraction
+                qreal weightFactor = scaleWeight(weight);
+                qreal attractiveForce = ATTRACTION_BASE * distance * weightFactor;
                 
                 // Normalize the delta
                 if (distance > 0) {
@@ -939,16 +1122,22 @@ void MainWindow::calculateForceDirectedLayout(const unordered_map<string, vector
             }
         }
         
-        // Apply forces with damping
+        // Apply forces with damping - more aggressive at the start, gentler at the end
         qreal damping = 1.0 - (iter / static_cast<qreal>(ITERATIONS));
+        // Cubic damping curve - stays stronger longer then falls off quickly
+        damping = damping * damping * (3 - 2 * damping);
+        
         for (const auto& [city, _] : adjList) {
             QString c = QString::fromStdString(city);
             QPointF force = forces[c];
             
+            // Apply forces with iteration-dependent limits for convergence
+            qreal iterationMaxDelta = MAX_DELTA * damping + 2.0;
+            
             // Limit maximum movement per step
             qreal magnitude = QLineF(QPointF(0, 0), force).length();
-            if (magnitude > MAX_DELTA) {
-                force = force * MAX_DELTA / magnitude;
+            if (magnitude > iterationMaxDelta) {
+                force = force * iterationMaxDelta / magnitude;
             }
             
             nodePositions[c] += force * damping;
@@ -965,6 +1154,21 @@ void MainWindow::calculateForceDirectedLayout(const unordered_map<string, vector
     for (auto it = nodePositions.begin(); it != nodePositions.end(); ++it) {
         it.value() -= center;
     }
+    
+    // Scale the graph to fit in the view
+    qreal maxDistance = 0;
+    for (auto it = nodePositions.begin(); it != nodePositions.end(); ++it) {
+        maxDistance = qMax(maxDistance, QLineF(QPointF(0, 0), it.value()).length());
+    }
+    
+    // Apply final scaling if needed to prevent graph from being too large
+    qreal desiredRadius = qMin(400.0, 100.0 + numNodes * 15.0);
+    if (maxDistance > desiredRadius) {
+        qreal scaleFactor = desiredRadius / maxDistance;
+        for (auto it = nodePositions.begin(); it != nodePositions.end(); ++it) {
+            it.value() *= scaleFactor;
+        }
+    }
 }
 
 void MainWindow::drawGraphEdges(const unordered_map<string, vector<pair<string, int>>>& adjList, 
@@ -972,70 +1176,253 @@ void MainWindow::drawGraphEdges(const unordered_map<string, vector<pair<string, 
     // Track edges to avoid duplicate visualization
     QSet<QPair<QString, QString>> drawnEdges;
     
+    // Find maximum and minimum weight for edge thickness scaling
+    int minWeight = INT_MAX;
+    int maxWeight = 0;
+    
+    for (const auto& [_, neighbors] : adjList) {
+        for (const auto& [__, weight] : neighbors) {
+            minWeight = qMin(minWeight, weight);
+            maxWeight = qMax(maxWeight, weight);
+        }
+    }
+    
+    // Handle case where all weights are the same
+    if (minWeight == maxWeight) {
+        minWeight = maxWeight - 1;
+    }
+    
     // Draw all edges
     for (const auto& [city, neighbors] : adjList) {
         QString fromCity = QString::fromStdString(city);
+        
+        // Skip if source city doesn't exist in our node positions
+        if (!nodePositions.contains(fromCity)) {
+            continue;
+        }
+        
         QPointF fromPos = nodePositions[fromCity];
         
-        for (const auto& [neighbor, distance] : neighbors) {
+        for (const auto& [neighbor, weight] : neighbors) {
             QString toCity = QString::fromStdString(neighbor);
+            
+            // Skip if target city doesn't exist in our node positions
+            if (!nodePositions.contains(toCity)) {
+                continue;
+            }
+            
             QPointF toPos = nodePositions[toCity];
             
             // Create a unique edge identifier
             QPair<QString, QString> edge(fromCity, toCity);
             
             // Check if we've already drawn this edge
-            if (!drawnEdges.contains(edge)) {
-                // Check if there's a reverse edge to create proper curves
-                bool hasBidirectional = false;
-                for (const auto& [c, n] : adjList) {
-                    if (c == neighbor) {
-                        for (const auto& [neigh, _] : n) {
-                            if (neigh == city) {
-                                hasBidirectional = true;
-                                break;
-                            }
+            if (drawnEdges.contains(edge)) {
+                continue;
+            }
+            
+            // Check if there's a reverse edge to create proper curves
+            bool hasBidirectional = false;
+            for (const auto& [c, n] : adjList) {
+                if (c == neighbor) {
+                    for (const auto& [neigh, _] : n) {
+                        if (neigh == city) {
+                            hasBidirectional = true;
+                            break;
                         }
                     }
-                    if (hasBidirectional) break;
                 }
-                
-                // Draw the arrow
-                drawCurvedArrow(graphScene, fromPos, toPos, QString::number(distance), 
-                               Qt::black, 1.0, false, hasBidirectional);
-                
-                // Mark this edge as drawn
-                drawnEdges.insert(edge);
+                if (hasBidirectional) break;
             }
+            
+            // Calculate edge thickness based on weight
+            // Thinner lines for higher weights (counterintuitive but visually clearer)
+            // Scale between 0.5 and 3.0
+            qreal normalizedWeight = (weight - minWeight) / qMax(1.0, static_cast<qreal>(maxWeight - minWeight));
+            qreal edgeThickness = 3.0 - normalizedWeight * 2.5; // 3.0 for min weight, 0.5 for max weight
+            
+            // Choose edge color based on weight
+            // Blend from green (low weight = good) to red (high weight = bad)
+            QColor edgeColor;
+            if (maxWeight > 10 * minWeight) {
+                // Logarithmic scale for widely varying weights
+                qreal logMin = log(minWeight);
+                qreal logMax = log(maxWeight);
+                qreal logWeight = log(weight);
+                qreal normalizedLogWeight = (logWeight - logMin) / (logMax - logMin);
+                
+                int red = qMin(255, int(normalizedLogWeight * 255));
+                int green = qMin(255, int((1.0 - normalizedLogWeight) * 200) + 55);
+                int blue = 55;
+                edgeColor = QColor(red, green, blue);
+            } else {
+                // Linear scale for weights in similar range
+                int red = qMin(255, int(normalizedWeight * 255));
+                int green = qMin(255, int((1.0 - normalizedWeight) * 200) + 55);
+                int blue = 55;
+                edgeColor = QColor(red, green, blue);
+            }
+            
+            // Draw the arrow
+            drawCurvedArrow(graphScene, fromPos, toPos, QString::number(weight), 
+                           edgeColor, edgeThickness, false, hasBidirectional);
+            
+            // Apply metadata to newly created items that don't have data yet
+            for (QGraphicsItem *item : graphScene->items()) {
+                if (!item->data(0).isValid()) {
+                    // Based on item type, set appropriate metadata
+                    if (item->type() == QGraphicsPathItem::Type) {
+                        // Determine if it's an edge path or arrowhead (arrowheads have a brush)
+                        QGraphicsPathItem* pathItem = qgraphicsitem_cast<QGraphicsPathItem*>(item);
+                        if (pathItem->brush() == Qt::NoBrush) {
+                            item->setData(0, "edge");
+                        } else {
+                            item->setData(0, "arrowhead");
+                        }
+                    } else if (item->type() == QGraphicsTextItem::Type) {
+                        item->setData(0, "edgeLabel");
+                    } else if (item->type() == QGraphicsRectItem::Type) {
+                        item->setData(0, "edgePanel");
+                    }
+                    
+                    // Set connection data
+                    item->setData(1, fromCity);
+                    item->setData(2, toCity);
+                    if (item->data(0).toString() == "edge") {
+                        item->setData(3, weight);
+                    }
+                }
+            }
+            
+            // Mark this edge as drawn
+            drawnEdges.insert(edge);
         }
     }
 }
 
 void MainWindow::drawGraphNodes(const unordered_map<string, vector<pair<string, int>>>& adjList, 
                                const QMap<QString, QPointF>& nodePositions) {
+    // Clear existing node map but keep references for deletion
+    QMap<QString, DraggableNode*> oldNodeItems = nodeItems;
+    nodeItems.clear();
+    
+    // Count incoming and outgoing connections for each node
+    QMap<QString, int> incomingEdges;
+    QMap<QString, int> outgoingEdges;
+    QMap<QString, int> totalWeight;
+    
+    // Initialize counters
+    for (const auto& [city, _] : adjList) {
+        QString cityStr = QString::fromStdString(city);
+        incomingEdges[cityStr] = 0;
+        outgoingEdges[cityStr] = 0;
+        totalWeight[cityStr] = 0;
+    }
+    
+    // Count connections
+    for (const auto& [city, neighbors] : adjList) {
+        QString cityStr = QString::fromStdString(city);
+        
+        // Count outgoing edges
+        outgoingEdges[cityStr] = neighbors.size();
+        
+        // Add to total weight
+        for (const auto& [_, weight] : neighbors) {
+            totalWeight[cityStr] += weight;
+        }
+        
+        // Count incoming edges
+        for (const auto& [neighbor, weight] : neighbors) {
+            QString neighborStr = QString::fromStdString(neighbor);
+            incomingEdges[neighborStr]++;
+            totalWeight[neighborStr] += weight;
+        }
+    }
+    
+    // Find max connection count and weight for scaling
+    int maxConnections = 0;
+    int maxNodeWeight = 1;
+    
+    for (const auto& [city, _] : adjList) {
+        QString cityStr = QString::fromStdString(city);
+        int connections = incomingEdges[cityStr] + outgoingEdges[cityStr];
+        maxConnections = qMax(maxConnections, connections);
+        maxNodeWeight = qMax(maxNodeWeight, totalWeight[cityStr]);
+    }
+    
     // Draw nodes after edges so they appear on top
     for (const auto& [city, _] : adjList) {
         QString cityStr = QString::fromStdString(city);
         QPointF pos = nodePositions[cityStr];
         
-        // Draw node
-        QGraphicsEllipseItem *node = graphScene->addEllipse(-20, -20, 40, 40);
+        // Calculate node size based on connection count (importance)
+        // Size between 15 and 40 radius
+        int connections = incomingEdges[cityStr] + outgoingEdges[cityStr];
+        qreal importanceFactor = 0.5 + 0.5 * sqrt(connections / qMax(1.0, static_cast<qreal>(maxConnections)));
+        qreal nodeSize = 15.0 + importanceFactor * 25.0; // Radius between 15 and 40
+        
+        // Choose node color based on incoming/outgoing ratio
+        QColor nodeColor;
+        if (connections > 0) {
+            // Calculate color based on in/out ratio
+            qreal inRatio = incomingEdges[cityStr] / qMax(1.0, static_cast<qreal>(connections));
+            
+            // More incoming = more blue, more outgoing = more green
+            int red = 100;
+            int green = 100 + int((1.0 - inRatio) * 155); // More green if more outgoing
+            int blue = 100 + int(inRatio * 155); // More blue if more incoming
+            
+            nodeColor = QColor(red, green, blue);
+        } else {
+            // Default color for isolated nodes
+            nodeColor = QColor(150, 150, 150);
+        }
+        
+        // Create draggable node instead of regular ellipse
+        DraggableNode *node = new DraggableNode(-nodeSize, -nodeSize, nodeSize*2, nodeSize*2);
         node->setPos(pos);
-        node->setBrush(QBrush(QColor(66, 134, 244)));
+        node->setBrush(QBrush(nodeColor));
         node->setPen(QPen(Qt::black));
         node->setZValue(10); // Ensure nodes appear above edges
+        node->setCityName(cityStr);
+        graphScene->addItem(node);
         
-        // Store the city name as item data
-        node->setData(0, "node");
-        node->setData(1, cityStr);
+        // Store in map for later access
+        nodeItems[cityStr] = node;
         
         // Add label
         QGraphicsTextItem *label = graphScene->addText(cityStr);
         label->setDefaultTextColor(Qt::white);
+        
+        // Make text size relative to node size
+        QFont font = label->font();
+        font.setPointSizeF(qMax(7.0, 8.0 + importanceFactor * 4.0)); // Font size between 8 and 12
+        font.setBold(true);
+        label->setFont(font);
+        
+        // Center the label in the node
         label->setPos(pos.x() - label->boundingRect().width()/2, 
-                     pos.y() - label->boundingRect().height()/2);
+                    pos.y() - label->boundingRect().height()/2);
         label->setZValue(11); // Ensure labels appear above nodes
+        
+        // Add drop shadow for better visibility
+        QGraphicsDropShadowEffect *effect = new QGraphicsDropShadowEffect();
+        effect->setOffset(1.0);
+        effect->setBlurRadius(3.0);
+        effect->setColor(Qt::black);
+        label->setGraphicsEffect(effect);
+        
+        // Associate label with node for moving together
+        label->setData(0, "label");
+        label->setData(1, cityStr);
+        
+        // Set node metadata
+        node->setData(0, "node");
+        node->setData(1, cityStr);
     }
+    
+    // Delete old nodes that are no longer in use
+    // Note: QGraphicsScene will handle actual deletion
 }
 
 void MainWindow::drawCurvedArrow(QGraphicsScene *scene, QPointF from, QPointF to, 
@@ -1058,7 +1445,9 @@ void MainWindow::drawCurvedArrow(QGraphicsScene *scene, QPointF from, QPointF to
     QPointF direction(dx, dy);
     
     // Calculate curve control point
-    qreal curveFactor = hasBidirectional ? 0.3 : 0.15;
+    // Use a dynamic curve factor based on length
+    qreal baseCurveFactor = hasBidirectional ? 0.3 : 0.15;
+    qreal curveFactor = baseCurveFactor * qMin(1.0, length / 200.0); // Scale down for short edges
     QPointF perpendicular(-dy, dx);
     QPointF controlPoint = (from + to) / 2.0 + perpendicular * curveFactor;
     
@@ -1086,13 +1475,22 @@ void MainWindow::drawCurvedArrow(QGraphicsScene *scene, QPointF from, QPointF to
     // Calculate perpendicular vector for arrowhead
     QPointF tipPerp(-tipDirection.y(), tipDirection.x());
     
-    // Calculate arrowhead points
-    qreal arrowSize = highlighted ? 15.0 : 10.0;
+    // Calculate arrowhead points with size proportional to edge thickness
+    qreal arrowSize = highlighted ? 15.0 : 8.0 + penWidth * 2.0;
     QPointF arrowP1 = tipBase - tipDirection * arrowSize + tipPerp * arrowSize * 0.5;
     QPointF arrowP2 = tipBase - tipDirection * arrowSize - tipPerp * arrowSize * 0.5;
     
-    // Draw the path
-    QPen pen(color, penWidth);
+    // Draw the path with improved styling
+    QPen pen(color, penWidth, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+    
+    // Use a fancier style for highlighted paths
+    if (highlighted) {
+        pen.setStyle(Qt::SolidLine);
+        pen.setWidth(penWidth + 1);
+        pen.setCapStyle(Qt::RoundCap);
+        pen.setJoinStyle(Qt::RoundJoin);
+    }
+    
     QGraphicsPathItem *pathItem = scene->addPath(path, pen);
     pathItem->setZValue(1); // Ensure below nodes
     
@@ -1106,16 +1504,140 @@ void MainWindow::drawCurvedArrow(QGraphicsScene *scene, QPointF from, QPointF to
     QGraphicsPathItem *arrowItem = scene->addPath(arrowPath, pen, QBrush(color));
     arrowItem->setZValue(2);
     
-    // Add distance label if provided
+    // Add distance label if provided with improved styling
     if (!label.isEmpty() && !highlighted) {
         QGraphicsTextItem *textItem = scene->addText(label);
-        textItem->setDefaultTextColor(color);
         
-        // Position label near the control point
-        QPointF textPos = controlPoint;
+        // Style the label
+        QFont font = textItem->font();
+        font.setPointSizeF(8.0);
+        font.setBold(true);
+        textItem->setFont(font);
+        
+        // Set color - use contrasting color against background
+        QColor textColor;
+        int colorLightness = (color.red() + color.green() + color.blue()) / 3;
+        if (colorLightness > 128) {
+            // Dark text for light backgrounds
+            textColor = QColor(10, 10, 10);
+        } else {
+            // Light text for dark backgrounds
+            textColor = QColor(245, 245, 245);
+        }
+        textItem->setDefaultTextColor(textColor);
+        
+        // Add a background panel for better visibility
+        QRectF textRect = textItem->boundingRect();
+        QGraphicsRectItem *panel = scene->addRect(textRect, Qt::NoPen, QBrush(QColor(color.red(), color.green(), color.blue(), 100)));
+        
+        // Position label near the midpoint but offset from the line
+        QPointF midPoint = (from + to) / 2.0;
+        
+        // Manually normalize the perpendicular vector
+        qreal perpLength = sqrt(perpendicular.x() * perpendicular.x() + perpendicular.y() * perpendicular.y());
+        QPointF normalizedPerp = (perpLength > 0) ? 
+                                QPointF(perpendicular.x() / perpLength, perpendicular.y() / perpLength) : 
+                                QPointF(0, 0);
+        
+        QPointF textOffset = normalizedPerp * 15.0; // Offset from the line
+        QPointF textPos = midPoint + textOffset;
+        
+        // Adjust position to center the label
         textPos.rx() -= textItem->boundingRect().width() / 2;
         textPos.ry() -= textItem->boundingRect().height() / 2;
+        
+        // Position both the panel and text
+        panel->setPos(textPos);
         textItem->setPos(textPos);
+        
+        // Add a drop shadow effect for the text
+        QGraphicsDropShadowEffect *shadowEffect = new QGraphicsDropShadowEffect();
+        shadowEffect->setOffset(1.0);
+        shadowEffect->setBlurRadius(2.0);
+        shadowEffect->setColor(QColor(0, 0, 0, 160));
+        textItem->setGraphicsEffect(shadowEffect);
+        
+        // Ensure text is above the panel
+        panel->setZValue(2);
         textItem->setZValue(3);
+        
+        // Tag each created item with its type (used for cleanup)
+        panel->setData(0, "edgePanel");
+        textItem->setData(0, "edgeLabel");
     }
+    
+    // Tag edge items (useful for cleanup)
+    pathItem->setData(0, "edge");
+    arrowItem->setData(0, "arrowhead");
+}
+
+// Add new methods to handle node dragging and edge updates
+void MainWindow::handleNodeDragFinished() {
+    // Find which node was dragged
+    for (auto it = nodeItems.begin(); it != nodeItems.end(); ++it) {
+        DraggableNode* node = it.value();
+        if (node->isSelected()) {
+            QString cityName = node->getCityName();
+            
+            // Update all edges connected to this node
+            updateEdgesForNode(cityName);
+            
+            // Also update any associated labels
+            for (QGraphicsItem *item : graphScene->items()) {
+                QGraphicsTextItem *textItem = dynamic_cast<QGraphicsTextItem*>(item);
+                if (textItem && textItem->data(0).toString() == "label" && 
+                    textItem->data(1).toString() == cityName) {
+                    
+                    // Reposition label to stay centered on the node
+                    QPointF nodePos = node->pos();
+                    textItem->setPos(nodePos.x() - textItem->boundingRect().width()/2, 
+                                    nodePos.y() - textItem->boundingRect().height()/2);
+                    break;
+                }
+            }
+            
+            // Log the node move
+            logMessage("Moved node: " + cityName);
+            break;
+        }
+    }
+}
+
+void MainWindow::updateEdgesForNode(const QString &nodeName) {
+    // Clear ALL edges from the scene and redraw completely to avoid any duplication issues
+    // This is more thorough but might be less efficient for large graphs
+    
+    // We'll keep track of all items to remove
+    QList<QGraphicsItem*> itemsToRemove;
+    
+    // Find all edge-related items (any items with data attributes)
+    for (QGraphicsItem *item : graphScene->items()) {
+        // Check if the item has any data - if so, it's something we created
+        if (item->data(0).isValid()) {
+            QString dataType = item->data(0).toString();
+            // If it's an edge-related item, remove it
+            if (dataType == "edge" || dataType == "arrowhead" || 
+                dataType == "edgeLabel" || dataType == "edgePanel") {
+                itemsToRemove.append(item);
+            }
+        }
+    }
+    
+    // Remove all identified items
+    for (QGraphicsItem *item : itemsToRemove) {
+        graphScene->removeItem(item);
+        delete item;
+    }
+    
+    // Get current positions of all nodes
+    QMap<QString, QPointF> currentPositions;
+    for (auto it = nodeItems.begin(); it != nodeItems.end(); ++it) {
+        currentPositions[it.key()] = it.value()->pos();
+    }
+    
+    // Redraw all edges
+    drawGraphEdges(graph.getAdjList(), currentPositions);
+    
+    // Log the action
+    logMessage("Updated edges after moving node: " + nodeName);
 } 

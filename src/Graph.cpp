@@ -113,6 +113,26 @@ void Graph::deleteCity(string name) {
     cout << "City " << standardizedName << " and all its connections have been removed.\n";
 }
 
+void Graph::sortConnections(bool byDistance) {
+    for (auto& [city, neighbors] : adjList) {
+        if (byDistance) {
+            // Sort by distance (ascending)
+            sort(neighbors.begin(), neighbors.end(),
+                [](const pair<string, int>& a, const pair<string, int>& b) {
+                    return a.second < b.second;
+                });
+        } else {
+            // Sort by neighbor name (lexicographically)
+            sort(neighbors.begin(), neighbors.end(),
+                [](const pair<string, int>& a, const pair<string, int>& b) {
+                    return a.first < b.first;
+                });
+        }
+    }
+    cout << "All connections have been sorted " 
+         << (byDistance ? "by distance." : "by city name.") << endl;
+}
+
 void Graph::deleteEdge(string from, string to) {
     string standardizedFrom = standardizeCity(from);
     string standardizedTo = standardizeCity(to);

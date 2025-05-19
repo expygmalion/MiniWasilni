@@ -29,6 +29,8 @@ public:
     void deleteEdge(string from, string to);
     void saveGraph(const string &filename);
     void loadGraph(const string& filename);
+    void sortConnections(bool byDistance = false);
+
     const unordered_map<string, vector<pair<string, int>>>& getAdjList() const { return adjList; }
     
     // Check if a city exists

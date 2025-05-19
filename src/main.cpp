@@ -81,10 +81,19 @@ int main() {
         else if (choice == 10) {
             break;
         }
+        else if (choice == 11) {
+            g.sortConnections(false); // Sort by city name
+            continue;
+        }
+        else if (choice == 12) {
+            g.sortConnections(true); // Sort by distance
+            continue;
+        }
         else {
             cout << "Feature not implemented yet.\n";
         }
     }
+    
     return 0;
 }
 
