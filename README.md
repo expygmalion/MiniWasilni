@@ -90,6 +90,10 @@ sudo apt-get install qt5-default libqt5svg5-dev cmake
 ```bash
 sudo dnf install qt5-qtbase-devel qt5-qtsvg-devel cmake
 ```
+#### On Windows
+- Install [Visual Studio](https://visualstudio.microsoft.com/) with C++ development tools
+- Install [CMake](https://cmake.org/download/)
+- Install [Qt5](https://www.qt.io/download-qt-installer) (select Qt 5.x and MSVC components)
 
 ### Build Steps
 
@@ -182,6 +186,27 @@ MiniWasilni is built with a modular architecture:
 - Pathfinding algorithms for optimal routing
 - IOManager for file operations
 - Qt-based visualization layer for the GUI
+
+
+# Contributing
+
+We welcome contributions to MiniWasiln, possibly even expanding it to MaxiWasilni
+
+Here are some areas where we think you can contribute:
+- **Documentation**: Improve and expand the documentation, especially for the GUI components and algorithms.
+- **Testing**: Add unit tests for the core algorithms and GUI components to ensure robustness.
+- **Features**: Implement additional graph algorithms or enhance existing ones, such as adding more pathfinding options or optimizing current algorithms.
+- **User Interface**: Improve the GUI with more interactive features or better visualizations.
+- **Performance Optimization**: Analyze and optimize the performance of the application, especially for large graphs.
+
+
+# Future Features
+
+- **time Collaboration**: Enable multiple users to interact with the graph simultaneously over a network.
+- **Graph Animation**: Add animations for graph operations like node addition, deletion, and traversal to make the visualization more dynamic.
+- **Customizable Themes**: Allow users to create and apply custom themes to the graph interface.
+- **Augmented Reality (AR) Integration**: Explore the possibility of visualizing graphs in AR for an interactive experience.
+- **Voice Commands**: Implement voice control to perform graph ope
 
 ## License
 
