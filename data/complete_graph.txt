@@ -1,0 +1,55 @@
+City_A
+City_B
+City_C
+City_D
+City_E
+City_F
+City_G
+City_H
+City_I
+City_J
+City_A City_B 5
+City_A City_C 7
+City_A City_D 9
+City_A City_E 12
+City_A City_F 8
+City_A City_G 15
+City_A City_H 10
+City_A City_I 6
+City_A City_J 14
+City_B City_C 4
+City_B City_D 11
+City_B City_E 6
+City_B City_F 9
+City_B City_G 8
+City_B City_H 13
+City_B City_I 7
+City_B City_J 5
+City_C City_D 3
+City_C City_E 10
+City_C City_F 7
+City_C City_G 6
+City_C City_H 9
+City_C City_I 12
+City_C City_J 8
+City_D City_E 5
+City_D City_F 4
+City_D City_G 11
+City_D City_H 7
+City_D City_I 9
+City_D City_J 6
+City_E City_F 8
+City_E City_G 10
+City_E City_H 5
+City_E City_I 11
+City_E City_J 7
+City_F City_G 9
+City_F City_H 6
+City_F City_I 8
+City_F City_J 12
+City_G City_H 4
+City_G City_I 7
+City_G City_J 5
+City_H City_I 9
+City_H City_J 8
+City_I City_J 6 

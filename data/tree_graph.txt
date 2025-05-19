@@ -1,0 +1,43 @@
+Root
+Level1_A
+Level1_B
+Level1_C
+Level2_A1
+Level2_A2
+Level2_B1
+Level2_B2
+Level2_C1
+Level2_C2
+Level3_A1a
+Level3_A1b
+Level3_A2a
+Level3_A2b
+Level3_B1a
+Level3_B1b
+Level3_B2a
+Level3_B2b
+Level3_C1a
+Level3_C1b
+Level3_C2a
+Level3_C2b
+Root Level1_A 1
+Root Level1_B 1
+Root Level1_C 1
+Level1_A Level2_A1 2
+Level1_A Level2_A2 2
+Level1_B Level2_B1 2
+Level1_B Level2_B2 2
+Level1_C Level2_C1 2
+Level1_C Level2_C2 2
+Level2_A1 Level3_A1a 3
+Level2_A1 Level3_A1b 3
+Level2_A2 Level3_A2a 3
+Level2_A2 Level3_A2b 3
+Level2_B1 Level3_B1a 3
+Level2_B1 Level3_B1b 3
+Level2_B2 Level3_B2a 3
+Level2_B2 Level3_B2b 3
+Level2_C1 Level3_C1a 3
+Level2_C1 Level3_C1b 3
+Level2_C2 Level3_C2a 3
+Level2_C2 Level3_C2b 3 

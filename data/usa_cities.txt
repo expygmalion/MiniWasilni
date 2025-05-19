@@ -1,0 +1,80 @@
+New_York
+Los_Angeles
+Chicago
+Houston
+Phoenix
+Philadelphia
+San_Antonio
+San_Diego
+Dallas
+San_Jose
+Austin
+Jacksonville
+Fort_Worth
+Columbus
+San_Francisco
+Charlotte
+Indianapolis
+Seattle
+Denver
+Washington_DC
+Boston
+El_Paso
+Nashville
+Detroit
+Portland
+Las_Vegas
+New_York Chicago 790
+New_York Washington_DC 225
+New_York Boston 215
+New_York Philadelphia 95
+Los_Angeles San_Diego 120
+Los_Angeles San_Francisco 380
+Los_Angeles Las_Vegas 270
+Los_Angeles Phoenix 370
+Chicago Indianapolis 180
+Chicago Detroit 280
+Chicago Columbus 350
+Houston Dallas 240
+Houston San_Antonio 195
+Houston Austin 165
+Phoenix Las_Vegas 300
+Phoenix San_Diego 355
+Philadelphia New_York 95
+Philadelphia Washington_DC 140
+San_Antonio Austin 80
+San_Antonio Dallas 270
+San_Diego Los_Angeles 120
+San_Diego Phoenix 355
+Dallas Fort_Worth 35
+Dallas Houston 240
+Dallas San_Antonio 270
+San_Jose San_Francisco 50
+Austin San_Antonio 80
+Austin Houston 165
+Jacksonville Charlotte 365
+Fort_Worth Dallas 35
+Columbus Indianapolis 175
+Columbus Detroit 205
+San_Francisco San_Jose 50
+San_Francisco Portland 635
+Charlotte Nashville 405
+Indianapolis Chicago 180
+Indianapolis Columbus 175
+Seattle Portland 175
+Seattle San_Francisco 805
+Denver Phoenix 580
+Denver Las_Vegas 750
+Washington_DC Philadelphia 140
+Washington_DC New_York 225
+Boston New_York 215
+El_Paso San_Antonio 550
+El_Paso Phoenix 345
+Nashville Charlotte 405
+Detroit Chicago 280
+Detroit Columbus 205
+Portland Seattle 175
+Portland San_Francisco 635
+Las_Vegas Los_Angeles 270
+Las_Vegas Phoenix 300
+Las_Vegas Denver 750 

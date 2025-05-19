@@ -1,0 +1,55 @@
+Center
+Inner1
+Inner2
+Inner3
+Inner4
+Inner5
+Inner6
+Outer1
+Outer2
+Outer3
+Outer4
+Outer5
+Outer6
+Outer7
+Outer8
+Outer9
+Outer10
+Outer11
+Outer12
+Center Inner1 3
+Center Inner2 3
+Center Inner3 3
+Center Inner4 3
+Center Inner5 3
+Center Inner6 3
+Inner1 Inner2 4
+Inner2 Inner3 4
+Inner3 Inner4 4
+Inner4 Inner5 4
+Inner5 Inner6 4
+Inner6 Inner1 4
+Inner1 Outer1 5
+Inner1 Outer2 5
+Inner2 Outer3 5
+Inner2 Outer4 5
+Inner3 Outer5 5
+Inner3 Outer6 5
+Inner4 Outer7 5
+Inner4 Outer8 5
+Inner5 Outer9 5
+Inner5 Outer10 5
+Inner6 Outer11 5
+Inner6 Outer12 5
+Outer1 Outer2 2
+Outer2 Outer3 2
+Outer3 Outer4 2
+Outer4 Outer5 2
+Outer5 Outer6 2
+Outer6 Outer7 2
+Outer7 Outer8 2
+Outer8 Outer9 2
+Outer9 Outer10 2
+Outer10 Outer11 2
+Outer11 Outer12 2
+Outer12 Outer1 2 

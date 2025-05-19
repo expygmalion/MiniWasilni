@@ -1,0 +1,33 @@
+Hub
+North
+South
+East
+West
+NorthEast
+NorthWest
+SouthEast
+SouthWest
+Far_North
+Far_South
+Far_East
+Far_West
+Hub North 5
+Hub South 5
+Hub East 5
+Hub West 5
+Hub NorthEast 7
+Hub NorthWest 7
+Hub SouthEast 7
+Hub SouthWest 7
+North Far_North 8
+South Far_South 8
+East Far_East 8
+West Far_West 8
+North NorthEast 6
+North NorthWest 6
+South SouthEast 6
+South SouthWest 6
+East NorthEast 6
+East SouthEast 6
+West NorthWest 6
+West SouthWest 6 

@@ -1,0 +1,110 @@
+London
+Paris
+Madrid
+Rome
+Berlin
+Athens
+Amsterdam
+Vienna
+Barcelona
+Stockholm
+Prague
+Budapest
+Warsaw
+Lisbon
+Brussels
+Dublin
+Copenhagen
+Helsinki
+Oslo
+Zurich
+Munich
+Milan
+Frankfurt
+Hamburg
+Manchester
+Edinburgh
+Lyon
+Naples
+Seville
+Valencia
+London Paris 340
+London Amsterdam 360
+London Brussels 320
+London Dublin 465
+London Manchester 260
+London Edinburgh 530
+Paris Brussels 265
+Paris Amsterdam 430
+Paris Lyon 390
+Paris Zurich 480
+Paris Madrid 1050
+Madrid Barcelona 505
+Madrid Lisbon 625
+Madrid Seville 530
+Rome Milan 480
+Rome Naples 225
+Rome Athens 1050
+Berlin Hamburg 255
+Berlin Prague 280
+Berlin Warsaw 520
+Berlin Munich 505
+Berlin Frankfurt 425
+Athens Rome 1050
+Athens Budapest 1280
+Amsterdam Brussels 170
+Amsterdam Hamburg 380
+Vienna Prague 250
+Vienna Budapest 215
+Vienna Munich 355
+Barcelona Madrid 505
+Barcelona Valencia 350
+Barcelona Paris 830
+Stockholm Oslo 420
+Stockholm Helsinki 400
+Stockholm Copenhagen 525
+Prague Vienna 250
+Prague Munich 300
+Prague Warsaw 520
+Budapest Vienna 215
+Budapest Warsaw 545
+Warsaw Berlin 520
+Warsaw Prague 520
+Warsaw Budapest 545
+Lisbon Madrid 625
+Lisbon Seville 450
+Brussels Paris 265
+Brussels Amsterdam 170
+Brussels London 320
+Dublin London 465
+Copenhagen Oslo 485
+Copenhagen Stockholm 525
+Copenhagen Hamburg 340
+Helsinki Stockholm 400
+Oslo Stockholm 420
+Oslo Copenhagen 485
+Zurich Munich 310
+Zurich Milan 215
+Zurich Paris 480
+Zurich Frankfurt 390
+Munich Vienna 355
+Munich Prague 300
+Munich Zurich 310
+Munich Frankfurt 305
+Milan Rome 480
+Milan Zurich 215
+Milan Naples 660
+Frankfurt Berlin 425
+Frankfurt Munich 305
+Frankfurt Zurich 390
+Hamburg Berlin 255
+Hamburg Amsterdam 380
+Hamburg Copenhagen 340
+Manchester London 260
+Edinburgh London 530
+Lyon Paris 390
+Naples Rome 225
+Naples Milan 660
+Seville Madrid 530
+Seville Lisbon 450
+Valencia Barcelona 350 
