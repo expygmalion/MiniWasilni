@@ -1,4 +1,60 @@
+# Build directories
+build/
+build_test/
+**/build_test/
+
+# Qt Generated files
+*_autogen/
+moc_*.cpp
+moc_*.h
+ui_*.h
+qrc_*.cpp
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Executables
+*.exe
+*.out
+*.app
+
+# IDE files
+.vscode/
+.vs/
+.idea/
+*.user
+*.swp
+*~
+
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+
+# QMake generated files
+Makefile.Release
+Makefile.Debug
+
+# macOS specific
 .DS_Store
+
+# Custom files
+setSizes
+
 # ==================== #
 # Platform Executables #
 # ==================== #
@@ -37,7 +93,6 @@ obj/                # Object files
 *.swo               # Vim swap files
 .DS_Store           # Mac Finder metadata
 Thumbs.db           # Windows thumbnail cache
-*.user              # VS user-specific files
 *.suo               # VS solution options
 # ============== #
 # Dependency Dir #

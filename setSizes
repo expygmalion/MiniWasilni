@@ -1,0 +1,17 @@
+    mainSplitter->addWidget(displayScrollArea);
+    mainSplitter->addWidget(optionsPanel);
+    
+    // Set the initial sizes of the splitter
+    QList<int> sizes;
+    sizes << 700 << 300;  // Left panel wider than right panel
+    mainSplitter->setSizes(sizes);
+}
+
+void MainWindow::createMenuBar() {
+    QMenu *fileMenu = menuBar()->addMenu("File");
+    
+    saveAction = new QAction("Save Graph", this);
+    connect(saveAction, &QAction::triggered, this, &MainWindow::saveGraph);
+    fileMenu->addAction(saveAction);
+    
+    loadAction = new QAction("Load Graph", this);
