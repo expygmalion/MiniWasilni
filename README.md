@@ -16,8 +16,13 @@ MiniWasilni is a comprehensive graph visualization and manipulation application 
 - Interactive zoom and pan controls
 - Detailed logging of operations
 
-- **Auto Layout Function**: Renders complete trees with the root on top and nodes with certain distances from each other to reduce visual complexity.
+
+
+- **Rendering of Trees**: Trees are redered in a heirarchial structure by default with eoot at top.
   ![Auto Layout Tree](images/AutoLayoutTree.png)
+
+
+- **Auto Layout Function**: Renders complete trees with the root on top and nodes with certain distances from each other to reduce visual complexity.
   ![Auto Layout Graph](images/AutoLayoutGraph.png)
 
 - **Adding a New Node**: Easily add new nodes to the graph.
