@@ -4,6 +4,7 @@ MiniWasilni is a comprehensive graph visualization and manipulation application 
 
 ## Features
 
+- Implemented using the most appropriate data structures.
 - Interactive graph visualization with a dynamic force-directed layout
 - Add and delete cities and route connections
 - Real-time graph updates with curved edge visualization
@@ -15,7 +16,41 @@ MiniWasilni is a comprehensive graph visualization and manipulation application 
 - Interactive zoom and pan controls
 - Detailed logging of operations
 
-## Versions
+- **Auto Layout Function**: Renders complete trees with the root on top and nodes with certain distances from each other to reduce visual complexity.
+  ![Auto Layout Tree](images/AutoLayoutTree.png)
+  ![Auto Layout Graph](images/AutoLayoutGraph.png)
+
+- **Adding a New Node**: Easily add new nodes to the graph.
+  ![Add Node](images/AddNode.png)
+
+- **Deleting a Node**: Remove nodes from the graph.
+  ![Delete Node](images/DeleteNode.png)
+
+- **Deleting a Connected City**: Removing a city like "Zamalek" drops all the edges connected to it.
+  ![Delete Node Zamalek Drops](images/DeleteNodeZamalekDrops.png)
+
+- **DFS Traverse**: Visualize Depth-First Search traversal.
+  ![DFS Traverse](images/DFSTraverse.png)
+
+- **DFS Spanning Tree**: Generate a spanning tree using DFS.
+  ![DFS Spanning Tree](images/DFSSpanningTree.png)
+
+- **BFS Traverse**: Visualize Breadth-First Search traversal.
+  ![BFS Traverse](images/BFSTraverse.png)
+
+- **BFS Spanning Tree**: Generate a spanning tree using BFS.
+  ![BFS Spanning Tree](images/BFSSpanningTree.png)
+
+- **Pathfinding**: Visualize pathfinding algorithms.
+  ![Pathfinding 0](images/PathFinding0.png)
+  ![Pathfinding 1](images/PathFinding1.png)
+
+- **Switch Between Dark and Light Mode**: Toggle between dark and light themes for better visibility.
+  ![Dark Light Mode](images/DarkLightMode.png)
+
+- **Drag and Drop on Any Node**: Easily reposition nodes with drag-and-drop functionality.
+  ![Drag Drop On Nodes](images/DragDropOnNodes.png)
+
 
 ### Command Line Interface (CLI)
 
