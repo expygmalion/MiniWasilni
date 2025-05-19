@@ -22,13 +22,14 @@ void Dijkstra::dijkstra(Graph& graph, const string& startCity, const string& end
     // Initialize data structures
     unordered_map<string, int> distances;
 
+
     unordered_map<string, string> previous;
+
 
     priority_queue<pair<int, string>, 
                   vector<pair<int, string>>, 
                   greater<pair<int, string>>> pq;
-    
-    // Set initial distances
+                  
     for (const auto& [city, _] : adjList) {
         distances[city] = numeric_limits<int>::max();
     }

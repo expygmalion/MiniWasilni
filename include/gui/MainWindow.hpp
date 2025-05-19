@@ -23,6 +23,10 @@
 #include <QGraphicsEllipseItem>
 #include <QSlider>
 #include <QGraphicsSceneMouseEvent>
+#include <QResizeEvent>
+#include <QShowEvent>
+#include <QApplication>
+#include <QRandomGenerator>
 
 #include "../Graph.hpp"
 #include "../IOManager.hpp"
@@ -70,6 +74,11 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+protected:
+    // Override event handlers
+    void resizeEvent(QResizeEvent *event) override;
+    void showEvent(QShowEvent *event) override;
+
 private slots:
     // File operations
     void saveGraph();
@@ -87,6 +96,7 @@ private slots:
     // Traversal operations
     void performDFS();
     void performBFS();
+    void visualizeSpanningTree(const vector<string>& path, const vector<pair<string, string>>& treeEdges, bool isDFS);
     
     // Pathfinding operations
     void findDijkstraPath();
@@ -95,10 +105,19 @@ private slots:
     // Node interaction handling
     void handleNodeDragFinished();
     
+    // Layout operations
+    void performAutoLayout();
+    
+    // Theme switching
+    void applyDarkMode(bool dark);
+    
 private:
     // Core components
     Graph graph;
     IOManager ioManager;
+    
+    // Theme tracking
+    bool isDarkMode;
     
     // UI Components - Main layout
     QSplitter *mainSplitter;
@@ -109,6 +128,10 @@ private:
     // Graphics components for graph visualization
     QGraphicsScene *graphScene;
     QGraphicsView *graphView;
+    
+    // View control components
+    QPushButton *autoLayoutButton;
+    QPushButton *resetViewButton;
     
     // Node tracking
     QMap<QString, DraggableNode*> nodeItems;
@@ -157,10 +180,33 @@ private:
     // Graph visualization helpers
     void calculateForceDirectedLayout(const unordered_map<string, vector<pair<string, int>>>& adjList, 
                                     QMap<QString, QPointF>& nodePositions);
+                                    
+    // New layout methods
+    void placeInCircle(const unordered_map<string, vector<pair<string, int>>>& adjList, 
+                      QMap<QString, QPointF>& nodePositions, double radius);
+                      
+    void placeInClusteredLayout(const unordered_map<string, vector<pair<string, int>>>& adjList, 
+                              QMap<QString, QPointF>& nodePositions,
+                              const QMap<QString, int>& nodeDegrees, 
+                              const QMap<QString, vector<QString>>& connectedNodes);
+                              
+    void placeWithForceDirected(const unordered_map<string, vector<pair<string, int>>>& adjList, 
+                              QMap<QString, QPointF>& nodePositions,
+                              const QMap<QString, int>& nodeDegrees,
+                              int minWeight, int maxWeight);
+                                  
+    void placeWithHierarchicalLayout(const unordered_map<string, vector<pair<string, int>>>& adjList,
+                                   QMap<QString, QPointF>& nodePositions,
+                                   const QMap<QString, int>& nodeDegrees);
+                                   
+    void resolveCollisions(QMap<QString, QPointF>& nodePositions, qreal minDistance);
+                                   
     void drawGraphEdges(const unordered_map<string, vector<pair<string, int>>>& adjList, 
                        const QMap<QString, QPointF>& nodePositions);
+                       
     void drawGraphNodes(const unordered_map<string, vector<pair<string, int>>>& adjList, 
                        const QMap<QString, QPointF>& nodePositions);
+                       
     void drawCurvedArrow(QGraphicsScene *scene, QPointF from, QPointF to, 
                         const QString &label, QColor color = Qt::black, qreal penWidth = 1.0,
                         bool highlighted = false, bool hasBidirectional = false);
@@ -169,6 +215,11 @@ private:
     QString generateDotFile();
     QString generateDotFileWithHighlight(const QStringList &highlightPath);
     bool renderDotToSvg(const QString &dotFilePath, const QString &svgFilePath);
+    
+    // New spanning tree visualization methods
+    void drawSpanningTree(const unordered_map<string, vector<pair<string, int>>>& adjList,
+                        const vector<pair<string, string>>& treeEdges,
+                        bool isDFS);
 };
 
 #endif // MAINWINDOW_HPP 

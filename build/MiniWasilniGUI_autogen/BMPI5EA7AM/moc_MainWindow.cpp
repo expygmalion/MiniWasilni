@@ -22,8 +22,8 @@ QT_BEGIN_MOC_NAMESPACE
 QT_WARNING_PUSH
 QT_WARNING_DISABLE_DEPRECATED
 struct qt_meta_stringdata_MainWindow_t {
-    QByteArrayData data[14];
-    char stringdata0[158];
+    QByteArrayData data[23];
+    char stringdata0[282];
 };
 #define QT_MOC_LITERAL(idx, ofs, len) \
     Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
@@ -43,16 +43,28 @@ QT_MOC_LITERAL(7, 63, 7), // "addEdge"
 QT_MOC_LITERAL(8, 71, 10), // "deleteEdge"
 QT_MOC_LITERAL(9, 82, 10), // "performDFS"
 QT_MOC_LITERAL(10, 93, 10), // "performBFS"
-QT_MOC_LITERAL(11, 104, 16), // "findDijkstraPath"
-QT_MOC_LITERAL(12, 121, 13), // "findAStarPath"
-QT_MOC_LITERAL(13, 135, 22) // "handleNodeDragFinished"
+QT_MOC_LITERAL(11, 104, 21), // "visualizeSpanningTree"
+QT_MOC_LITERAL(12, 126, 14), // "vector<string>"
+QT_MOC_LITERAL(13, 141, 4), // "path"
+QT_MOC_LITERAL(14, 146, 28), // "vector<pair<string,string> >"
+QT_MOC_LITERAL(15, 175, 9), // "treeEdges"
+QT_MOC_LITERAL(16, 185, 5), // "isDFS"
+QT_MOC_LITERAL(17, 191, 16), // "findDijkstraPath"
+QT_MOC_LITERAL(18, 208, 13), // "findAStarPath"
+QT_MOC_LITERAL(19, 222, 22), // "handleNodeDragFinished"
+QT_MOC_LITERAL(20, 245, 17), // "performAutoLayout"
+QT_MOC_LITERAL(21, 263, 13), // "applyDarkMode"
+QT_MOC_LITERAL(22, 277, 4) // "dark"
 
     },
     "MainWindow\0saveGraph\0\0loadGraph\0"
     "exportToSVG\0addCity\0deleteCity\0addEdge\0"
     "deleteEdge\0performDFS\0performBFS\0"
-    "findDijkstraPath\0findAStarPath\0"
-    "handleNodeDragFinished"
+    "visualizeSpanningTree\0vector<string>\0"
+    "path\0vector<pair<string,string> >\0"
+    "treeEdges\0isDFS\0findDijkstraPath\0"
+    "findAStarPath\0handleNodeDragFinished\0"
+    "performAutoLayout\0applyDarkMode\0dark"
 };
 #undef QT_MOC_LITERAL
 
@@ -62,7 +74,7 @@ static const uint qt_meta_data_MainWindow[] = {
        8,       // revision
        0,       // classname
        0,    0, // classinfo
-      12,   14, // methods
+      15,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -70,18 +82,21 @@ static const uint qt_meta_data_MainWindow[] = {
        0,       // signalCount
 
  // slots: name, argc, parameters, tag, flags
-       1,    0,   74,    2, 0x08 /* Private */,
-       3,    0,   75,    2, 0x08 /* Private */,
-       4,    0,   76,    2, 0x08 /* Private */,
-       5,    0,   77,    2, 0x08 /* Private */,
-       6,    0,   78,    2, 0x08 /* Private */,
-       7,    0,   79,    2, 0x08 /* Private */,
-       8,    0,   80,    2, 0x08 /* Private */,
-       9,    0,   81,    2, 0x08 /* Private */,
-      10,    0,   82,    2, 0x08 /* Private */,
-      11,    0,   83,    2, 0x08 /* Private */,
-      12,    0,   84,    2, 0x08 /* Private */,
-      13,    0,   85,    2, 0x08 /* Private */,
+       1,    0,   89,    2, 0x08 /* Private */,
+       3,    0,   90,    2, 0x08 /* Private */,
+       4,    0,   91,    2, 0x08 /* Private */,
+       5,    0,   92,    2, 0x08 /* Private */,
+       6,    0,   93,    2, 0x08 /* Private */,
+       7,    0,   94,    2, 0x08 /* Private */,
+       8,    0,   95,    2, 0x08 /* Private */,
+       9,    0,   96,    2, 0x08 /* Private */,
+      10,    0,   97,    2, 0x08 /* Private */,
+      11,    3,   98,    2, 0x08 /* Private */,
+      17,    0,  105,    2, 0x08 /* Private */,
+      18,    0,  106,    2, 0x08 /* Private */,
+      19,    0,  107,    2, 0x08 /* Private */,
+      20,    0,  108,    2, 0x08 /* Private */,
+      21,    1,  109,    2, 0x08 /* Private */,
 
  // slots: parameters
     QMetaType::Void,
@@ -93,9 +108,12 @@ static const uint qt_meta_data_MainWindow[] = {
     QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
+    QMetaType::Void, 0x80000000 | 12, 0x80000000 | 14, QMetaType::Bool,   13,   15,   16,
     QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void, QMetaType::Bool,   22,
 
        0        // eod
 };
@@ -115,13 +133,15 @@ void MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
         case 6: _t->deleteEdge(); break;
         case 7: _t->performDFS(); break;
         case 8: _t->performBFS(); break;
-        case 9: _t->findDijkstraPath(); break;
-        case 10: _t->findAStarPath(); break;
-        case 11: _t->handleNodeDragFinished(); break;
+        case 9: _t->visualizeSpanningTree((*reinterpret_cast< const vector<string>(*)>(_a[1])),(*reinterpret_cast< const vector<pair<string,string> >(*)>(_a[2])),(*reinterpret_cast< bool(*)>(_a[3]))); break;
+        case 10: _t->findDijkstraPath(); break;
+        case 11: _t->findAStarPath(); break;
+        case 12: _t->handleNodeDragFinished(); break;
+        case 13: _t->performAutoLayout(); break;
+        case 14: _t->applyDarkMode((*reinterpret_cast< bool(*)>(_a[1]))); break;
         default: ;
         }
     }
-    (void)_a;
 }
 
 QT_INIT_METAOBJECT const QMetaObject MainWindow::staticMetaObject = { {
@@ -153,13 +173,13 @@ int MainWindow::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 12)
+        if (_id < 15)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 12;
+        _id -= 15;
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 12)
+        if (_id < 15)
             *reinterpret_cast<int*>(_a[0]) = -1;
-        _id -= 12;
+        _id -= 15;
     }
     return _id;
 }

@@ -32,11 +32,6 @@
 #include <QGraphicsSceneHoverEvent>
 #include <cmath>
 #include <QRandomGenerator>
-#include <QDebug>
-#include <QSvgGenerator>
-#include <QFileInfo>
-#include <QStyleFactory>
-#include <QQueue>
 
 // Dark mode stylesheet
 const QString darkModeStyle = R"(
@@ -347,22 +342,8 @@ MainWindow::MainWindow(QWidget *parent)
     setWindowTitle("MiniWasilni - Graph Visualization");
     resize(1200, 800);
     
-    // Apply dark palette
-    QPalette darkPalette;
-    darkPalette.setColor(QPalette::Window, QColor(53, 53, 53));
-    darkPalette.setColor(QPalette::WindowText, Qt::white);
-    darkPalette.setColor(QPalette::Base, QColor(25, 25, 25));
-    darkPalette.setColor(QPalette::AlternateBase, QColor(53, 53, 53));
-    darkPalette.setColor(QPalette::ToolTipBase, Qt::white);
-    darkPalette.setColor(QPalette::ToolTipText, Qt::white);
-    darkPalette.setColor(QPalette::Text, Qt::white);
-    darkPalette.setColor(QPalette::Button, QColor(53, 53, 53));
-    darkPalette.setColor(QPalette::ButtonText, Qt::white);
-    darkPalette.setColor(QPalette::BrightText, Qt::red);
-    darkPalette.setColor(QPalette::Link, QColor(42, 130, 218));
-    darkPalette.setColor(QPalette::Highlight, QColor(42, 130, 218));
-    darkPalette.setColor(QPalette::HighlightedText, Qt::black);
-    qApp->setPalette(darkPalette);
+    // Apply dark mode by default
+    applyDarkMode(true);
     
     setupUI();
     createMenuBar();
@@ -429,99 +410,6 @@ void MainWindow::createMenuBar() {
     connect(autoLayoutAction, &QAction::triggered, this, &MainWindow::performAutoLayout);
     viewMenu->addAction(autoLayoutAction);
     
-    QAction *hierarchicalLayoutAction = new QAction("Hierarchical Layout", this);
-    connect(hierarchicalLayoutAction, &QAction::triggered, [this]() {
-        logMessage("Applying hierarchical layout...");
-        
-        // Check if the graph is empty
-        if (graph.getAdjList().empty()) {
-            logMessage("No nodes to layout - graph is empty");
-            return;
-        }
-        
-        // Get the graph structure
-        const auto& adjList = graph.getAdjList();
-        
-        // Calculate node degrees
-        QMap<QString, int> nodeDegrees;
-        for (const auto& [city, neighbors] : adjList) {
-            QString cityStr = QString::fromStdString(city);
-            nodeDegrees[cityStr] = neighbors.size();
-            
-            // Also count incoming edges
-            for (const auto& [otherCity, otherNeighbors] : adjList) {
-                if (city != otherCity) {
-                    for (const auto& [neighbor, _] : otherNeighbors) {
-                        if (neighbor == city) {
-                            nodeDegrees[cityStr]++;
-                        }
-                    }
-                }
-            }
-        }
-        
-        // Calculate new positions with hierarchical layout
-        QMap<QString, QPointF> newPositions;
-        placeWithHierarchicalLayout(adjList, newPositions, nodeDegrees);
-        
-        // Apply new positions to all nodes
-        for (auto it = nodeItems.begin(); it != nodeItems.end(); ++it) {
-            QString cityName = it.key();
-            DraggableNode* node = it.value();
-            
-            if (newPositions.contains(cityName)) {
-                // Apply the new position
-                QPointF endPos = newPositions[cityName];
-                node->setPos(endPos);
-                
-                // Update any text labels associated with this node
-                for (QGraphicsItem *item : graphScene->items()) {
-                    if (item->data(0).toString() == "label" && item->data(1).toString() == cityName) {
-                        QGraphicsTextItem *textItem = qgraphicsitem_cast<QGraphicsTextItem*>(item);
-                        if (textItem) {
-                            // Reposition label to stay centered on the node
-                            textItem->setPos(endPos.x() - textItem->boundingRect().width()/2, 
-                                          endPos.y() - textItem->boundingRect().height()/2);
-                        }
-                    }
-                }
-            }
-        }
-        
-        // Update all edges by redrawing them
-        QList<QGraphicsItem*> itemsToRemove;
-        for (QGraphicsItem *item : graphScene->items()) {
-            if (item->data(0).isValid()) {
-                QString dataType = item->data(0).toString();
-                if (dataType == "edge" || dataType == "arrowhead" || 
-                    dataType == "edgeLabel" || dataType == "edgePanel") {
-                    itemsToRemove.append(item);
-                }
-            }
-        }
-        
-        // Remove all edge-related items
-        for (QGraphicsItem *item : itemsToRemove) {
-            graphScene->removeItem(item);
-            delete item;
-        }
-        
-        // Get current positions of all nodes
-        QMap<QString, QPointF> updatedPositions;
-        for (auto it = nodeItems.begin(); it != nodeItems.end(); ++it) {
-            updatedPositions[it.key()] = it.value()->pos();
-        }
-        
-        // Redraw all edges
-        drawGraphEdges(adjList, updatedPositions);
-        
-        // Ensure all nodes are visible
-        graphView->fitInView(graphScene->itemsBoundingRect().adjusted(-50, -50, 50, 50), Qt::KeepAspectRatio);
-        
-        logMessage("Hierarchical layout complete");
-    });
-    viewMenu->addAction(hierarchicalLayoutAction);
-    
     QAction *resetViewAction = new QAction("Reset View", this);
     connect(resetViewAction, &QAction::triggered, [this]() {
         graphView->fitInView(graphScene->itemsBoundingRect().adjusted(-50, -50, 50, 50), Qt::KeepAspectRatio);
@@ -532,49 +420,9 @@ void MainWindow::createMenuBar() {
     viewMenu->addSeparator();
     QAction *toggleThemeAction = new QAction("Toggle Dark/Light Mode", this);
     connect(toggleThemeAction, &QAction::triggered, [this]() {
-        isDarkMode = !isDarkMode;
-        QPalette newPalette;
-        
-        if (isDarkMode) {
-            // Apply dark palette
-            newPalette.setColor(QPalette::Window, QColor(53, 53, 53));
-            newPalette.setColor(QPalette::WindowText, Qt::white);
-            newPalette.setColor(QPalette::Base, QColor(25, 25, 25));
-            newPalette.setColor(QPalette::AlternateBase, QColor(53, 53, 53));
-            newPalette.setColor(QPalette::ToolTipBase, Qt::white);
-            newPalette.setColor(QPalette::ToolTipText, Qt::white);
-            newPalette.setColor(QPalette::Text, Qt::white);
-            newPalette.setColor(QPalette::Button, QColor(53, 53, 53));
-            newPalette.setColor(QPalette::ButtonText, Qt::white);
-            newPalette.setColor(QPalette::BrightText, Qt::red);
-            newPalette.setColor(QPalette::Link, QColor(42, 130, 218));
-            newPalette.setColor(QPalette::Highlight, QColor(42, 130, 218));
-            newPalette.setColor(QPalette::HighlightedText, Qt::black);
-            graphScene->setBackgroundBrush(QColor(30, 30, 30));
-        } else {
-            // Use default light palette (use a simple light palette)
-            newPalette.setColor(QPalette::Window, QColor(240, 240, 240));
-            newPalette.setColor(QPalette::WindowText, Qt::black);
-            newPalette.setColor(QPalette::Base, Qt::white);
-            newPalette.setColor(QPalette::AlternateBase, QColor(245, 245, 245));
-            newPalette.setColor(QPalette::ToolTipBase, Qt::white);
-            newPalette.setColor(QPalette::ToolTipText, Qt::black);
-            newPalette.setColor(QPalette::Text, Qt::black);
-            newPalette.setColor(QPalette::Button, QColor(240, 240, 240));
-            newPalette.setColor(QPalette::ButtonText, Qt::black);
-            newPalette.setColor(QPalette::BrightText, Qt::red);
-            newPalette.setColor(QPalette::Link, QColor(0, 120, 210));
-            newPalette.setColor(QPalette::Highlight, QColor(0, 120, 210));
-            newPalette.setColor(QPalette::HighlightedText, Qt::white);
-            graphScene->setBackgroundBrush(Qt::white);
-        }
-        
-        qApp->setPalette(newPalette);
-        
-        // Update the graph display to reflect theme changes
+        applyDarkMode(!isDarkMode); 
+        // Update node and edge colors to match the theme
         updateGraphDisplay();
-        
-        logMessage(QString("Switched to %1 mode").arg(isDarkMode ? "dark" : "light"));
     });
     viewMenu->addAction(toggleThemeAction);
 }
@@ -589,7 +437,7 @@ void MainWindow::createDisplayPanel() {
     
     // Create graphics scene and view for graph display
     if (!graphScene) {
-    graphScene = new QGraphicsScene(this);
+        graphScene = new QGraphicsScene(this);
     }
     
     graphView = new QGraphicsView(graphScene);
@@ -634,71 +482,6 @@ void MainWindow::createDisplayPanel() {
     autoLayoutButton->setFixedWidth(120);
     connect(autoLayoutButton, &QPushButton::clicked, this, &MainWindow::performAutoLayout);
     
-    // Add hierarchical layout button
-    QPushButton *hierarchicalButton = new QPushButton("Hierarchical");
-    hierarchicalButton->setToolTip("Organize nodes in a top-down hierarchical layout");
-    hierarchicalButton->setFixedWidth(120);
-    connect(hierarchicalButton, &QPushButton::clicked, [this]() {
-        // Use the same implementation as the menu action
-        if (!graph.getAdjList().empty()) {
-            logMessage("Applying hierarchical layout...");
-            
-            const auto& adjList = graph.getAdjList();
-            
-            // Calculate node degrees
-            QMap<QString, int> nodeDegrees;
-            for (const auto& [city, neighbors] : adjList) {
-                QString cityStr = QString::fromStdString(city);
-                nodeDegrees[cityStr] = neighbors.size();
-                
-                // Also count incoming edges
-                for (const auto& [otherCity, otherNeighbors] : adjList) {
-                    if (city != otherCity) {
-                        for (const auto& [neighbor, _] : otherNeighbors) {
-                            if (neighbor == city) {
-                                nodeDegrees[cityStr]++;
-                            }
-                        }
-                    }
-                }
-            }
-            
-            // Calculate new positions
-            QMap<QString, QPointF> newPositions;
-            placeWithHierarchicalLayout(adjList, newPositions, nodeDegrees);
-            
-            // Apply new positions
-            for (auto it = nodeItems.begin(); it != nodeItems.end(); ++it) {
-                QString cityName = it.key();
-                DraggableNode* node = it.value();
-                
-                if (newPositions.contains(cityName)) {
-                    QPointF endPos = newPositions[cityName];
-                    node->setPos(endPos);
-                    
-                    // Update labels
-                    for (QGraphicsItem *item : graphScene->items()) {
-                        if (item->data(0).toString() == "label" && item->data(1).toString() == cityName) {
-                            QGraphicsTextItem *textItem = qgraphicsitem_cast<QGraphicsTextItem*>(item);
-                            if (textItem) {
-                                textItem->setPos(endPos.x() - textItem->boundingRect().width()/2, 
-                                                endPos.y() - textItem->boundingRect().height()/2);
-                            }
-                        }
-                    }
-                }
-            }
-            
-            // Redraw edges
-            updateEdgesForNode(""); // Empty string triggers a full redraw
-            
-            // Fit view
-            graphView->fitInView(graphScene->itemsBoundingRect().adjusted(-50, -50, 50, 50), Qt::KeepAspectRatio);
-            
-            logMessage("Hierarchical layout complete");
-        }
-    });
-    
     // Add reset view button
     resetViewButton = new QPushButton("Reset View");
     resetViewButton->setToolTip("Reset the view to show all nodes");
@@ -726,7 +509,6 @@ void MainWindow::createDisplayPanel() {
     zoomLabel->setBuddy(zoomSlider);
     
     viewControlLayout->addWidget(autoLayoutButton);
-    viewControlLayout->addWidget(hierarchicalButton);
     viewControlLayout->addWidget(resetViewButton);
     viewControlLayout->addWidget(zoomLabel);
     viewControlLayout->addWidget(zoomSlider, 1); // Give slider expanding space
@@ -812,153 +594,12 @@ void MainWindow::createOptionsPanel() {
     QHBoxLayout *traversalButtonLayout = new QHBoxLayout();
     dfsButton = new QPushButton("DFS Traverse");
     bfsButton = new QPushButton("BFS Traverse");
-    
-    // Connect standard traversal buttons to just highlight paths
-    connect(dfsButton, &QPushButton::clicked, this, &MainWindow::performDFS);
-    connect(bfsButton, &QPushButton::clicked, this, &MainWindow::performBFS);
-    
     traversalButtonLayout->addWidget(dfsButton);
     traversalButtonLayout->addWidget(bfsButton);
-    
-    // Add spanning tree visualization buttons
-    QHBoxLayout *spanningTreeButtonLayout = new QHBoxLayout();
-    QPushButton *dfsTreeButton = new QPushButton("DFS Tree");
-    QPushButton *bfsTreeButton = new QPushButton("BFS Tree");
-    
-    dfsTreeButton->setToolTip("Visualize DFS spanning tree");
-    bfsTreeButton->setToolTip("Visualize BFS spanning tree");
-    
-    // For tree buttons, collect the tree edges and visualize spanning tree
-    connect(dfsTreeButton, &QPushButton::clicked, [this]() {
-        if (startCityInput->text().trimmed().isEmpty()) {
-            logMessage("Error: Please enter a starting city");
-            return;
-        }
-        
-        QString startCity = startCityInput->text().trimmed();
-        if (!graph.cityExists(startCity.toStdString())) {
-            logMessage("Error: City " + startCity + " does not exist");
-            return;
-        }
-        
-        // Capture the path from DFS traversal
-        vector<string> path;
-        vector<pair<string, string>> treeEdges;
-        
-        // Get DFS path
-        Traversal::dfsWithPath(graph, startCity.toStdString(), path);
-        
-        // Build tree edges more reliably by tracking parent-child relationships
-        unordered_map<string, string> parentOf;
-        unordered_set<string> visited;
-        
-        // Mark the start node as visited
-        visited.insert(path[0]);
-        
-        // For each node in the DFS path, find its unvisited neighbors
-        // and create a tree edge to the first one that appears later in the path
-        for (size_t i = 0; i < path.size(); ++i) {
-            const string& current = path[i];
-            
-            // For each neighbor of the current node
-            const auto& neighbors = graph.getAdjList().at(current);
-            for (const auto& [neighbor, _] : neighbors) {
-                // If this neighbor hasn't been visited yet and appears later in the path,
-                // add it to the tree
-                if (visited.find(neighbor) == visited.end()) {
-                    // Check if this neighbor appears in the DFS path after the current node
-                    auto it = std::find(path.begin() + i + 1, path.end(), neighbor);
-                    if (it != path.end()) {
-                        // This is a tree edge
-                        treeEdges.push_back({current, neighbor});
-                        parentOf[neighbor] = current;
-                        visited.insert(neighbor);
-                    }
-                }
-            }
-        }
-        
-        // Make sure all nodes in path are connected in the tree
-        // by adding edges to any remaining unvisited nodes
-        for (size_t i = 1; i < path.size(); ++i) {
-            const string& current = path[i];
-            
-            // If this node doesn't have a parent yet, find a visited node
-            // that has an edge to it and add that edge to the tree
-            if (parentOf.find(current) == parentOf.end()) {
-                for (const auto& [city, neighbors] : graph.getAdjList()) {
-                    if (visited.find(city) != visited.end() && city != current) {
-                        for (const auto& [neighbor, _] : neighbors) {
-                            if (neighbor == current) {
-                                treeEdges.push_back({city, current});
-                                parentOf[current] = city;
-                                break;
-                            }
-                        }
-                        if (parentOf.find(current) != parentOf.end()) {
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-        
-        visualizeSpanningTree(path, treeEdges, true);
-    });
-    
-    connect(bfsTreeButton, &QPushButton::clicked, [this]() {
-        if (startCityInput->text().trimmed().isEmpty()) {
-            logMessage("Error: Please enter a starting city");
-            return;
-        }
-        
-        QString startCity = startCityInput->text().trimmed();
-        if (!graph.cityExists(startCity.toStdString())) {
-            logMessage("Error: City " + startCity + " does not exist");
-            return;
-        }
-        
-        // Capture the path from BFS traversal
-        vector<string> path;
-        vector<pair<string, string>> treeEdges;
-        
-        // Get BFS path
-        Traversal::bfsWithPath(graph, startCity.toStdString(), path);
-        
-        // Create a map to track the level of each node in the BFS tree
-        std::unordered_map<string, int> levels;
-        std::unordered_map<string, string> parents;
-        
-        // First node is at level 0
-        levels[path[0]] = 0;
-        
-        // Reconstruct the BFS tree
-        for (size_t i = 0; i < path.size(); i++) {
-            const string& current = path[i];
-            int currentLevel = levels[current];
-            
-            // Check neighbors of the current node
-            for (const auto& [neighbor, _] : graph.getAdjList().at(current)) {
-                // If neighbor not yet assigned a level, it's a child in the BFS tree
-                if (levels.find(neighbor) == levels.end() && 
-                    std::find(path.begin(), path.end(), neighbor) != path.end()) {
-                    levels[neighbor] = currentLevel + 1;
-                    parents[neighbor] = current;
-                    treeEdges.push_back({current, neighbor});
-                }
-            }
-        }
-        
-        visualizeSpanningTree(path, treeEdges, false);
-    });
-    
-    spanningTreeButtonLayout->addWidget(dfsTreeButton);
-    spanningTreeButtonLayout->addWidget(bfsTreeButton);
     
     traversalLayout->addWidget(startLabel);
     traversalLayout->addWidget(startCityInput);
     traversalLayout->addLayout(traversalButtonLayout);
-    traversalLayout->addLayout(spanningTreeButtonLayout);
     traversalGroup->setLayout(traversalLayout);
     
     // 4. Pathfinding Group
@@ -1052,8 +693,8 @@ void MainWindow::saveGraph() {
         
         // Try to save the graph
         try {
-        ioManager.saveGraph(fileName.toStdString(), graph);
-        logMessage("Graph saved to " + fileName);
+            ioManager.saveGraph(fileName.toStdString(), graph);
+            logMessage("Graph saved to " + fileName);
         } catch (const std::exception& e) {
             logMessage("Error saving graph: " + QString(e.what()));
             QMessageBox::critical(this, "Save Error", "Failed to save graph: " + QString(e.what()));
@@ -1065,9 +706,9 @@ void MainWindow::loadGraph() {
     QString fileName = QFileDialog::getOpenFileName(this, "Load Graph", "data/", "Text Files (*.txt)");
     if (!fileName.isEmpty()) {
         try {
-        ioManager.loadGraph(fileName.toStdString(), graph);
-        updateGraphDisplay();
-        logMessage("Graph loaded from " + fileName);
+            ioManager.loadGraph(fileName.toStdString(), graph);
+            updateGraphDisplay();
+            logMessage("Graph loaded from " + fileName);
         } catch (const std::exception& e) {
             logMessage("Error loading graph: " + QString(e.what()));
             QMessageBox::critical(this, "Load Error", "Failed to load graph: " + QString(e.what()));
@@ -1216,9 +857,6 @@ void MainWindow::performBFS() {
     
     // Capture the path from BFS traversal
     vector<string> path;
-    vector<pair<string, string>> treeEdges; // Track parent-child edges for spanning tree
-    
-    // Perform BFS traversal
     Traversal::bfsWithPath(graph, startCity.toStdString(), path);
     
     // Convert path to QStringList for highlighting
@@ -1227,110 +865,9 @@ void MainWindow::performBFS() {
         pathStringList << QString::fromStdString(city);
     }
     
-    // Just highlight the path on the original graph
+    // Update display with highlighted path
     updateGraphDisplay(pathStringList.join(","));
-    
     logMessage("BFS traversal from " + startCity + ": " + pathStringList.join(" -> "));
-}
-
-void MainWindow::visualizeSpanningTree(const vector<string>& path, 
-                                     const vector<pair<string, string>>& treeEdges, 
-                                     bool isDFS) {
-    if (path.empty()) {
-        logMessage("Error: Empty traversal path");
-        return;
-    }
-    
-    logMessage(QString("Visualizing %1 spanning tree from %2").arg(
-        isDFS ? "DFS" : "BFS",
-        QString::fromStdString(path[0])
-    ));
-    
-    // Clear the scene
-    graphScene->clear();
-    nodeItems.clear();
-    
-    // Get the original graph structure for reference
-    const auto& originalAdjList = graph.getAdjList();
-    
-    // Create a simplified adjacency list containing only the tree edges
-    unordered_map<string, vector<pair<string, int>>> treeAdjList;
-    
-    // Initialize nodes
-    for (const auto& city : path) {
-        treeAdjList[city] = vector<pair<string, int>>();
-    }
-    
-    // Add tree edges to the adjacency list
-    // We assign a standard weight of 1 for simplicity
-    for (const auto& [parent, child] : treeEdges) {
-        // Find original edge weight if it exists
-        int weight = 1;
-        auto it = originalAdjList.find(parent);
-        if (it != originalAdjList.end()) {
-            for (const auto& [neighbor, neighborWeight] : it->second) {
-                if (neighbor == child) {
-                    weight = neighborWeight;
-                    break;
-                }
-            }
-        }
-        
-        treeAdjList[parent].push_back({child, weight});
-    }
-    
-    // Create a node position map
-    QMap<QString, QPointF> nodePositions;
-    
-    // Use hierarchical layout for both DFS and BFS trees since it works well
-    QMap<QString, int> nodeDegrees;
-    for (const auto& [city, neighbors] : treeAdjList) {
-        QString cityStr = QString::fromStdString(city);
-        nodeDegrees[cityStr] = neighbors.size();
-    }
-    
-    // Apply the hierarchical layout
-    placeWithHierarchicalLayout(treeAdjList, nodePositions, nodeDegrees);
-    
-    // Draw the tree
-    drawGraphEdges(treeAdjList, nodePositions);
-    drawGraphNodes(treeAdjList, nodePositions);
-    
-    // Center the view and ensure all items are visible
-    graphScene->setSceneRect(graphScene->itemsBoundingRect().adjusted(-50, -50, 50, 50));
-    graphView->fitInView(graphScene->sceneRect(), Qt::KeepAspectRatio);
-    graphView->centerOn(0, 0);
-    
-    // Add a title showing the algorithm used
-    QString titleText = QString("%1 Spanning Tree from %2").arg(
-        isDFS ? "DFS" : "BFS",
-        QString::fromStdString(path[0])
-    );
-    
-    // Create the title with a background
-    QGraphicsTextItem *titleItem = graphScene->addText(titleText);
-    QFont titleFont = titleItem->font();
-    titleFont.setPointSize(14);
-    titleFont.setBold(true);
-    titleItem->setFont(titleFont);
-    titleItem->setDefaultTextColor(isDarkMode ? Qt::white : Qt::black);
-    
-    // Position at the top center
-    titleItem->setPos(-titleItem->boundingRect().width() / 2, 
-                     -graphScene->itemsBoundingRect().height() / 2 - 50);
-    
-    // Add background panel for better visibility
-    QRectF textRect = titleItem->boundingRect();
-    QColor panelColor = isDarkMode ? QColor(50, 50, 50, 200) : QColor(240, 240, 240, 200);
-    QPainterPath panelPath;
-    panelPath.addRoundedRect(textRect, 5, 5);
-    QGraphicsPathItem *panel = graphScene->addPath(panelPath, Qt::NoPen, QBrush(panelColor));
-    panel->setPos(titleItem->pos());
-    panel->setZValue(titleItem->zValue() - 1);
-    
-    logMessage(QString("Spanning tree visualization complete (%1 nodes, %2 edges)")
-              .arg(path.size())
-              .arg(treeEdges.size()));
 }
 
 // Pathfinding Operations
@@ -1682,7 +1219,7 @@ void MainWindow::updateGraphDisplay() {
     
     // For first-time display, calculate initial positions using force-directed layout
     if (nodePositions.isEmpty()) {
-    calculateForceDirectedLayout(adjList, nodePositions);
+        calculateForceDirectedLayout(adjList, nodePositions);
     }
     
     // First draw edges
@@ -1754,10 +1291,13 @@ void MainWindow::calculateForceDirectedLayout(const unordered_map<string, vector
                                            QMap<QString, QPointF>& nodePositions) {
     // Initialize node positions in a circle
     int numNodes = adjList.size();
-    qreal radius = qMin(600.0, 150.0 + numNodes * 20.0); // Larger initial radius for better spacing
+    qreal radius = qMin(400.0, 100.0 + numNodes * 15.0); // Larger initial radius
     int i = 0;
     
-    // Find the maximum degree for scaling
+    // Map to store nodes for quick lookup
+    QMap<QString, bool> nodeMap;
+    
+    // Map to count connection degree of nodes and store max weight
     QMap<QString, int> nodeDegrees;
     QMap<QString, int> nodeMaxWeight;
     QMap<QString, vector<QString>> connectedNodes;
@@ -1800,6 +1340,8 @@ void MainWindow::calculateForceDirectedLayout(const unordered_map<string, vector
         nodeMaxWeight[cityStr] = maxNodeWeight;
         connectedNodes[cityStr] = connections;
         maxDegree = qMax(maxDegree, degree);
+        
+        nodeMap[cityStr] = true;
     }
     
     // If there's only one weight value, avoid division by zero
@@ -1819,41 +1361,15 @@ void MainWindow::calculateForceDirectedLayout(const unordered_map<string, vector
     double edgeDensity = static_cast<double>(totalEdges) / (numNodes * (numNodes - 1));
     bool isSparse = edgeDensity < 0.2;
     
-    // Check if the graph is primarily directed - has clear hierarchy
-    bool isPrimarilyDirected = false;
-    int bidirectionalEdges = 0;
-    
-    // Check the ratio of bidirectional edges to detect hierarchical structure
-    QSet<QPair<QString, QString>> edges;
-    for (const auto& [city, neighbors] : adjList) {
-        QString fromCity = QString::fromStdString(city);
-        for (const auto& [neighbor, _] : neighbors) {
-            QString toCity = QString::fromStdString(neighbor);
-            QPair<QString, QString> edge(fromCity, toCity);
-            QPair<QString, QString> reverseEdge(toCity, fromCity);
-            
-            if (edges.contains(reverseEdge)) {
-                bidirectionalEdges++;
-            }
-            edges.insert(edge);
-        }
-    }
-    
-    double directionalityRatio = 1.0 - (static_cast<double>(bidirectionalEdges * 2) / edges.size());
-    isPrimarilyDirected = (directionalityRatio > 0.6) && (numNodes > 4); // >60% one-way edges
-    
     // Place nodes based on graph structure and aesthetics
     if (numNodes <= 5) {
-        // For very small graphs, use a circle layout with larger radius
-        placeInCircle(adjList, nodePositions, 300.0);
-    } else if (isPrimarilyDirected && numNodes > 4) {
-        // For directed graphs with sufficient nodes, use hierarchical layout
-        placeWithHierarchicalLayout(adjList, nodePositions, nodeDegrees);
-    } else if (isSparse && numNodes < 25) {
-        // For sparse medium graphs, try to place connected nodes in clusters
+        // For very small graphs, use a perfect circle layout
+        placeInCircle(adjList, nodePositions, 200);
+    } else if (isSparse && numNodes < 20) {
+        // For sparse medium graphs, try to place connected nodes closer
         placeInClusteredLayout(adjList, nodePositions, nodeDegrees, connectedNodes);
     } else {
-        // For larger or denser graphs, use enhanced force-directed layout
+        // For larger or denser graphs, use force-directed layout
         placeWithForceDirected(adjList, nodePositions, nodeDegrees, minWeight, maxWeight);
     }
 }
@@ -1863,23 +1379,13 @@ void MainWindow::placeInCircle(const unordered_map<string, vector<pair<string, i
     int numNodes = adjList.size();
     int i = 0;
     
-    // Sort cities alphabetically for consistent placement
-    QStringList sortedCities;
     for (const auto& [city, _] : adjList) {
-        sortedCities.append(QString::fromStdString(city));
-    }
-    sortedCities.sort();
-    
-    // Place nodes evenly around circle
-    for (const QString& cityStr : sortedCities) {
-        // Calculate position on circle with added slight randomness for aesthetics
-        QRandomGenerator *rng = QRandomGenerator::global();
-        qreal radiusVariation = rng->bounded(-10, 11); // Changed to int parameters
-        qreal angleOffset = (rng->bounded(-5, 6) / 100.0); // Use int parameters and convert to desired range
+        QString cityStr = QString::fromStdString(city);
         
-        qreal angle = 2 * M_PI * i / numNodes + angleOffset;
-        qreal x = (radius + radiusVariation) * cos(angle);
-        qreal y = (radius + radiusVariation) * sin(angle);
+        // Calculate position on circle
+        qreal angle = 2 * M_PI * i / numNodes;
+        qreal x = radius * cos(angle);
+        qreal y = radius * sin(angle);
         
         nodePositions[cityStr] = QPointF(x, y);
         i++;
@@ -1905,7 +1411,7 @@ void MainWindow::placeInClusteredLayout(const unordered_map<string, vector<pair<
     
     // Place top nodes in a central circle
     int centralNodes = qMin(5, numNodes);
-    double innerRadius = 200.0; // Increased inner radius
+    double innerRadius = 150;
     
     for (int i = 0; i < centralNodes; i++) {
         qreal angle = 2 * M_PI * i / centralNodes;
@@ -1916,7 +1422,7 @@ void MainWindow::placeInClusteredLayout(const unordered_map<string, vector<pair<
     }
     
     // Place remaining nodes in relation to their connections
-    double outerRadius = 450.0; // Significantly increased outer radius
+    double outerRadius = 300;
     
     for (int i = centralNodes; i < sortedNodes.size(); i++) {
         QString node = sortedNodes[i];
@@ -1942,40 +1448,23 @@ void MainWindow::placeInClusteredLayout(const unordered_map<string, vector<pair<
             QLineF line(QPointF(0, 0), avgPos);
             QPointF dir = line.unitVector().p2();
             
-            // Randomize significantly to avoid overlaps
+            // Randomize slightly to avoid overlaps
             QRandomGenerator *rng = QRandomGenerator::global();
-            qreal randOffset = rng->bounded(-40, 61); // -40 to +60
-            qreal randAngle = rng->bounded(-25, 26);  // -25 to +25
+            qreal randOffset = rng->bounded(-20, 21); // -20 to +20
+            qreal randAngle = rng->bounded(-20, 21);  // -20 to +20
             QTransform transform;
             transform.rotate(randAngle);
             dir = transform.map(dir);
             
-            // Scale the radius based on node position (nodes further out get more spacing)
-            qreal radiusFactor = 1.0 + ((i - centralNodes) / static_cast<qreal>(numNodes));
-            qreal adjustedRadius = outerRadius * radiusFactor;
-            
-            nodePositions[node] = dir * (adjustedRadius + randOffset);
+            nodePositions[node] = dir * (outerRadius + randOffset);
         } else {
-            // Place disconnected nodes in an outer circle with slight randomness
+            // Place disconnected nodes in an outer circle
             qreal angle = 2 * M_PI * (i - centralNodes) / qMax(1, (numNodes - centralNodes));
-            
-            // Add some randomness to angle
-            QRandomGenerator *rng = QRandomGenerator::global();
-            qreal angleOffset = (rng->bounded(-10, 11) / 100.0); // Fixed by using int bounds
-            qreal radiusOffset = rng->bounded(-30, 61); // Fixed by using int bounds
-            
-            // Nodes further out get placed even further
-            qreal distanceFactor = 1.0 + ((i - centralNodes) / static_cast<qreal>(numNodes * 2));
-            qreal adjustedRadius = (outerRadius + radiusOffset) * distanceFactor;
-            
-            qreal x = adjustedRadius * cos(angle + angleOffset);
-            qreal y = adjustedRadius * sin(angle + angleOffset);
+            qreal x = outerRadius * cos(angle);
+            qreal y = outerRadius * sin(angle);
             nodePositions[node] = QPointF(x, y);
         }
     }
-    
-    // Run node-to-node collision detection and resolution
-    resolveCollisions(nodePositions, 70.0); // Min distance between nodes (increased)
 }
 
 void MainWindow::placeWithForceDirected(const unordered_map<string, vector<pair<string, int>>>& adjList, 
@@ -1984,7 +1473,7 @@ void MainWindow::placeWithForceDirected(const unordered_map<string, vector<pair<
                                       int minWeight, int maxWeight) {
     // Initialize node positions in a circle
     int numNodes = adjList.size();
-    qreal radius = qMin(600.0, 150.0 + numNodes * 20.0); // Increased initial radius
+    qreal radius = qMin(400.0, 100.0 + numNodes * 15.0);
     int i = 0;
     
     // Find the maximum degree for scaling
@@ -2022,12 +1511,12 @@ void MainWindow::placeWithForceDirected(const unordered_map<string, vector<pair<
     };
     
     // Force-directed layout iterations
-    const int ITERATIONS = 120; // More iterations for better convergence
+    const int ITERATIONS = 100; // More iterations for better convergence
     // Optimal distance - dynamic based on node count
-    const qreal k = qMin(220.0, 50.0 + numNodes * 5.0); // Increased node spacing
-    const qreal REPULSION_BASE = 25000.0; // Much stronger repulsion
-    const qreal ATTRACTION_BASE = 0.04;  // Weaker attraction
-    const qreal MAX_DELTA = 18.0; // Allow larger movements
+    const qreal k = qMin(150.0, 30.0 + numNodes * 3.0);
+    const qreal REPULSION_BASE = 15000.0; // Stronger repulsion
+    const qreal ATTRACTION_BASE = 0.06;  // Stronger attraction
+    const qreal MAX_DELTA = 15.0;
     
     for (int iter = 0; iter < ITERATIONS; iter++) {
         // Calculate repulsive forces between all pairs of nodes
@@ -2134,371 +1623,13 @@ void MainWindow::placeWithForceDirected(const unordered_map<string, vector<pair<
     }
     
     // Apply final scaling if needed to prevent graph from being too large
-    qreal desiredRadius = 500.0; // Significantly increased desired radius
+    qreal desiredRadius = qMin(400.0, 100.0 + numNodes * 15.0);
     if (maxDistance > desiredRadius) {
         qreal scaleFactor = desiredRadius / maxDistance;
         for (auto it = nodePositions.begin(); it != nodePositions.end(); ++it) {
             it.value() *= scaleFactor;
         }
     }
-    
-    // Run node-to-node collision detection and resolution
-    resolveCollisions(nodePositions, 80.0); // Min distance between nodes
-}
-
-// New helper method to resolve node collision
-void MainWindow::resolveCollisions(QMap<QString, QPointF>& nodePositions, qreal minDistance) {
-    const int MAX_RESOLUTION_ITERATIONS = 50;
-    bool collisionsExist = true;
-    int iterCount = 0;
-    
-    while (collisionsExist && iterCount < MAX_RESOLUTION_ITERATIONS) {
-        collisionsExist = false;
-        
-        // Check all node pairs for collisions
-        QList<QString> nodeKeys = nodePositions.keys();
-        
-        for (int i = 0; i < nodeKeys.size(); i++) {
-            for (int j = i + 1; j < nodeKeys.size(); j++) {
-                QString n1 = nodeKeys[i];
-                QString n2 = nodeKeys[j];
-                
-                QPointF p1 = nodePositions[n1];
-                QPointF p2 = nodePositions[n2];
-                
-                QLineF line(p1, p2);
-                qreal distance = line.length();
-                
-                if (distance < minDistance) {
-                    collisionsExist = true;
-                    
-                    // Calculate the displacement vector
-                    QPointF displacement = p2 - p1;
-                    qreal displaceAmount = (minDistance - distance) / 2.0;
-                    
-                    if (distance > 0.1) {
-                        // Normalize and scale
-                        displacement /= distance;
-                        displacement *= displaceAmount;
-                        
-                        // Move nodes apart
-                        nodePositions[n1] -= displacement;
-                        nodePositions[n2] += displacement;
-                    } else {
-                        // If nodes are exactly on top of each other, move in random direction
-                        QRandomGenerator *rng = QRandomGenerator::global();
-                        qreal angle = rng->bounded(0, 628) / 100.0; // 0 to 2π (approximately)
-                        QPointF randomDir(cos(angle), sin(angle));
-                        
-                        nodePositions[n1] -= randomDir * (minDistance / 2.0);
-                        nodePositions[n2] += randomDir * (minDistance / 2.0);
-                    }
-                }
-            }
-        }
-        
-        iterCount++;
-    }
-}
-
-// New hierarchical layout implementation
-void MainWindow::placeWithHierarchicalLayout(const unordered_map<string, vector<pair<string, int>>>& adjList,
-                                          QMap<QString, QPointF>& nodePositions,
-                                          const QMap<QString, int>& nodeDegrees) {
-    // Analyze the graph to identify layers (levels in the hierarchy)
-    QMap<QString, int> nodeLayer;     // Maps node name to its layer
-    QMap<int, QList<QString>> layerNodes; // Maps layer number to list of nodes in that layer
-    
-    // First, identify source nodes (nodes with no incoming edges)
-    QSet<QString> allNodes;
-    QSet<QString> hasIncomingEdges;
-    
-    // Collect all nodes and nodes with incoming edges
-    for (const auto& [city, neighbors] : adjList) {
-        QString fromCity = QString::fromStdString(city);
-        allNodes.insert(fromCity);
-        
-        for (const auto& [neighbor, _] : neighbors) {
-            QString toCity = QString::fromStdString(neighbor);
-            hasIncomingEdges.insert(toCity);
-            allNodes.insert(toCity);
-        }
-    }
-    
-    // Source nodes are those without incoming edges
-    QList<QString> sourceNodes;
-    for (const QString& node : allNodes) {
-        if (!hasIncomingEdges.contains(node)) {
-            sourceNodes.append(node);
-        }
-    }
-    
-    // If no source nodes found (cyclic graph), use nodes with fewest incoming edges
-    if (sourceNodes.isEmpty()) {
-        QMap<QString, int> incomingCount;
-        
-        // Count incoming edges for each node
-        for (const auto& [city, neighbors] : adjList) {
-            QString fromCity = QString::fromStdString(city);
-            
-            for (const auto& [neighbor, _] : neighbors) {
-                QString toCity = QString::fromStdString(neighbor);
-                incomingCount[toCity]++;
-            }
-        }
-        
-        // Find minimum incoming edge count
-        int minIncoming = INT_MAX;
-        for (auto it = incomingCount.begin(); it != incomingCount.end(); ++it) {
-            minIncoming = qMin(minIncoming, it.value());
-        }
-        
-        // Use nodes with minimum incoming edges as source nodes
-        for (auto it = incomingCount.begin(); it != incomingCount.end(); ++it) {
-            if (it.value() == minIncoming) {
-                sourceNodes.append(it.key());
-            }
-        }
-    }
-    
-    // Breadth-first traversal to assign layers
-    QQueue<QString> queue;
-    QSet<QString> visited;
-    
-    // Start with source nodes in layer 0
-    for (const QString& node : sourceNodes) {
-        nodeLayer[node] = 0;
-        layerNodes[0].append(node);
-        queue.enqueue(node);
-        visited.insert(node);
-    }
-    
-    // Process remaining nodes in breadth-first order
-    while (!queue.isEmpty()) {
-        QString current = queue.dequeue();
-        int currentLayer = nodeLayer[current];
-        
-        // Get neighbors of current node
-        for (const auto& [city, neighbors] : adjList) {
-            if (QString::fromStdString(city) == current) {
-                for (const auto& [neighbor, _] : neighbors) {
-                    QString next = QString::fromStdString(neighbor);
-                    
-                    // If not visited, assign to next layer
-                    if (!visited.contains(next)) {
-                        int nextLayer = currentLayer + 1;
-                        nodeLayer[next] = nextLayer;
-                        layerNodes[nextLayer].append(next);
-                        queue.enqueue(next);
-                        visited.insert(next);
-                    }
-                    // If already visited but in same or earlier layer, move to a later layer
-                    else if (nodeLayer[next] <= currentLayer) {
-                        int nextLayer = currentLayer + 1;
-                        // Remove from old layer
-                        layerNodes[nodeLayer[next]].removeAll(next);
-                        // Add to new layer
-                        nodeLayer[next] = nextLayer;
-                        layerNodes[nextLayer].append(next);
-                    }
-                }
-            }
-        }
-    }
-    
-    // Handle any unvisited nodes (disconnected from source)
-    for (const QString& node : allNodes) {
-        if (!visited.contains(node)) {
-            // Assign unconnected nodes to a new layer below all others
-            int newLayer = layerNodes.isEmpty() ? 0 : layerNodes.keys().last() + 1;
-            nodeLayer[node] = newLayer;
-            layerNodes[newLayer].append(node);
-        }
-    }
-    
-    // Calculate positions based on layers
-    int totalLayers = layerNodes.size();
-    
-    // Calculate vertical spacing
-    qreal verticalSpacing = 150.0;  // Base vertical spacing between layers
-    qreal totalHeight = verticalSpacing * (totalLayers - 1);
-    qreal startY = -totalHeight / 2.0;
-    
-    // Position nodes layer by layer
-    for (int layer = 0; layer < totalLayers; layer++) {
-        const QList<QString>& nodesInLayer = layerNodes[layer];
-        int nodesInThisLayer = nodesInLayer.size();
-        
-        // Calculate horizontal spacing based on number of nodes in this layer
-        qreal horizontalSpacing = qMax(100.0, 150.0 - (nodesInThisLayer - 5) * 5.0);
-        qreal totalWidth = horizontalSpacing * (nodesInThisLayer - 1);
-        qreal startX = -totalWidth / 2.0;
-        
-        // Sort nodes horizontally to minimize edge crossings
-        QList<QString> sortedNodesInLayer = nodesInLayer;
-        
-        // Simple heuristic: sort by average X position of connected nodes in previous layer
-        if (layer > 0) {
-            QMap<QString, qreal> averageConnectedX;
-            
-            // Calculate average X position of connected nodes in previous layer
-            for (const QString& node : nodesInLayer) {
-                averageConnectedX[node] = 0.0;
-                int connectedCount = 0;
-                
-                // Check nodes in previous layer for connections
-                for (const QString& prevNode : layerNodes[layer-1]) {
-                    // Check if prevNode has an edge to node
-                    for (const auto& [city, neighbors] : adjList) {
-                        if (QString::fromStdString(city) == prevNode) {
-                            for (const auto& [neighbor, _] : neighbors) {
-                                if (QString::fromStdString(neighbor) == node) {
-                                    averageConnectedX[node] += nodePositions[prevNode].x();
-                                    connectedCount++;
-                                break;
-                            }
-                        }
-                    }
-                    }
-                }
-                
-                // If node has connections, calculate average
-                if (connectedCount > 0) {
-                    averageConnectedX[node] /= connectedCount;
-                } else {
-                    // Assign a large value for nodes without connections
-                    averageConnectedX[node] = 10000.0;
-                }
-            }
-            
-            // Sort based on average X of connected nodes
-            std::sort(sortedNodesInLayer.begin(), sortedNodesInLayer.end(), 
-                    [&averageConnectedX](const QString& a, const QString& b) {
-                        return averageConnectedX[a] < averageConnectedX[b];
-                    });
-        }
-        
-        // Position nodes in this layer
-        for (int i = 0; i < nodesInThisLayer; i++) {
-            QString node = sortedNodesInLayer[i];
-            
-            // Calculate position with some randomness for aesthetics
-            QRandomGenerator *rng = QRandomGenerator::global();
-            qreal xOffset = rng->bounded(-10, 11); // Fixed by using int bounds
-            qreal yOffset = rng->bounded(-10, 11); // Fixed by using int bounds
-            
-            qreal x = startX + i * horizontalSpacing + xOffset;
-            qreal y = startY + layer * verticalSpacing + yOffset;
-            
-            nodePositions[node] = QPointF(x, y);
-        }
-    }
-    
-    // Apply force-directed refinement to reduce edge crossing and improve aesthetics
-    const int REFINE_ITERATIONS = 30;
-    const qreal HORIZONTAL_FORCE = 0.3;  // Strength of horizontal position preservation
-    
-    for (int iter = 0; iter < REFINE_ITERATIONS; iter++) {
-        QMap<QString, QPointF> forces;
-        
-        // Initialize forces
-        for (const auto& node : allNodes) {
-            forces[node] = QPointF(0, 0);
-        }
-        
-        // Calculate repulsive forces between nodes in the same layer
-        for (int layer = 0; layer < totalLayers; layer++) {
-            const QList<QString>& nodesInLayer = layerNodes[layer];
-            
-            for (int i = 0; i < nodesInLayer.size(); i++) {
-                for (int j = i + 1; j < nodesInLayer.size(); j++) {
-                    QString n1 = nodesInLayer[i];
-                    QString n2 = nodesInLayer[j];
-                    
-                    QPointF p1 = nodePositions[n1];
-                    QPointF p2 = nodePositions[n2];
-                    
-                    QPointF delta = p1 - p2;
-                    qreal distance = qMax(1.0, QLineF(p1, p2).length());
-                    
-                    // Stronger horizontal repulsion
-                    QPointF repulsion = delta * (2000.0 / (distance * distance));
-                    // Emphasize horizontal separation
-                    repulsion.setX(repulsion.x() * 1.5);
-                    
-                    forces[n1] += repulsion;
-                    forces[n2] -= repulsion;
-                }
-            }
-        }
-        
-        // Calculate attractive forces along edges
-        for (const auto& [city, neighbors] : adjList) {
-            QString fromNode = QString::fromStdString(city);
-            QPointF fromPos = nodePositions[fromNode];
-            
-            for (const auto& [neighbor, _] : neighbors) {
-                QString toNode = QString::fromStdString(neighbor);
-                QPointF toPos = nodePositions[toNode];
-                
-                QPointF delta = fromPos - toPos;
-                qreal distance = qMax(1.0, QLineF(fromPos, toPos).length());
-                
-                // Stronger vertical attraction to maintain hierarchy
-                QPointF attraction = delta * (0.05 * distance);
-                
-                forces[fromNode] -= attraction;
-                forces[toNode] += attraction;
-            }
-        }
-        
-        // Apply forces while preserving layer positions
-        qreal damping = 1.0 - (iter / static_cast<qreal>(REFINE_ITERATIONS));
-        
-        for (auto it = forces.begin(); it != forces.end(); ++it) {
-            QString node = it.key();
-            QPointF force = it.value();
-            
-            // Limit maximum movement
-            qreal maxDelta = 10.0 * damping;
-            qreal magnitude = QLineF(QPointF(0, 0), force).length();
-            
-            if (magnitude > maxDelta) {
-                force = force * maxDelta / magnitude;
-            }
-            
-            // Apply force primarily horizontally, limit vertical movement
-            QPointF newPos = nodePositions[node];
-            newPos.rx() += force.x() * damping;
-            
-            // Restrict vertical movement to maintain layer hierarchy
-            // but allow small adjustments for aesthetics
-            newPos.ry() += force.y() * damping * 0.2;
-            
-            // Strongly maintain the node's vertical layer position
-            int layer = nodeLayer[node];
-            qreal targetY = startY + layer * verticalSpacing;
-            
-            // Pull back toward proper layer y-position
-            newPos.ry() = newPos.y() * (1.0 - HORIZONTAL_FORCE) + targetY * HORIZONTAL_FORCE;
-            
-            nodePositions[node] = newPos;
-        }
-    }
-    
-    // Final pass to ensure proper layer separation
-    for (int layer = 0; layer < totalLayers; layer++) {
-        qreal targetY = startY + layer * verticalSpacing;
-        
-        for (const QString& node : layerNodes[layer]) {
-            QPointF pos = nodePositions[node];
-            pos.setY(targetY + QRandomGenerator::global()->bounded(-10, 11)); // Fixed by using int bounds
-            nodePositions[node] = pos;
-        }
-    }
-    
-    // Apply collision resolution to prevent node overlaps
-    resolveCollisions(nodePositions, 80.0);
 }
 
 // Add new methods to handle node dragging and edge updates
@@ -2569,11 +1700,7 @@ void MainWindow::updateEdgesForNode(const QString &nodeName) {
     drawGraphEdges(graph.getAdjList(), currentPositions);
     
     // Log the action
-    if (!nodeName.isEmpty()) {
-        logMessage("Updated edges after moving node: " + nodeName);
-    } else {
-        logMessage("Redrew all edges");
-    }
+    logMessage("Updated edges after moving node: " + nodeName);
 }
 
 void MainWindow::performAutoLayout() {
@@ -2822,7 +1949,7 @@ void MainWindow::drawGraphNodes(const unordered_map<string, vector<pair<string, 
         
         // Center the label in the node
         label->setPos(pos.x() - label->boundingRect().width()/2, 
-                     pos.y() - label->boundingRect().height()/2);
+                    pos.y() - label->boundingRect().height()/2);
         label->setZValue(11); // Ensure labels appear above nodes
         
         // Add drop shadow for better visibility
